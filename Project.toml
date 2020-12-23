@@ -1,0 +1,7 @@
+name = "SparseVertex"
+uuid = "90e5b0d8-73d4-48d2-a116-5fd8650b07f2"
+authors = ["Julian Stobbe <Atomtomate@gmx.de>"]
+version = "0.1.0"
+
+[deps]
+JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
