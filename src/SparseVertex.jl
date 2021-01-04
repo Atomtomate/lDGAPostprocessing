@@ -1,8 +1,12 @@
 module SparseVertex
+__precompile__(false)
 
+using EquivalenceClassesConstructor
 using JLD
 
+export SVertex
+
 include("IO.jl")
-include("Vertex.jl")
+include("Types.jl")
 
 end # module

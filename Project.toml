@@ -4,4 +4,6 @@ authors = ["Julian Stobbe <Atomtomate@gmx.de>"]
 version = "0.1.0"
 
 [deps]
+EquivalenceClassesConstructor = "b0d053df-94a8-4c0c-9762-4584a2fcd8b0"
 JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
