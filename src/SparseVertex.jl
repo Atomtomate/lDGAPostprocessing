@@ -2,11 +2,17 @@ module SparseVertex
 __precompile__(false)
 
 using EquivalenceClassesConstructor
-using JLD
+using JLD2
+using DelimitedFiles
+using DataStructures
 
-export SVertex
+export read_vert_chi, read_gm_wim
+export identityMap, expand
+export SVertex, indices, full
 
 include("IO.jl")
-include("Types.jl")
+include("SVertex.jl")
+include("helpers.jl")
+include("SVertexTools.jl")
 
 end # module
