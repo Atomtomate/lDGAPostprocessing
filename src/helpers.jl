@@ -29,5 +29,29 @@ function computeF(freqList::AbstractArray{Int,2}, F_up::SVertex{T}, F_do::SVerte
     return F_den, F_mag
 end
 
-#function computeχ!(freq_list::AbstractArray{Int,2}, F_up::SVertex{T}, F_do::SVertex{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}})
-#end
+function computeχ!(freq_list::AbstractArray{Int,2}, F_sp::Array{Complex{Float64}}, χ0::Dict{Tuple{Int,Int},Complex{Float64}})
+end
+
+function computeχ(F::SVertex{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}) where T
+    res = inv(F)
+    for ωn in 1:size(F,1)
+        for νn in 1:size(F,3)
+            res[ωn,νn,νn] -= 1.0/χ0[(ωn,νn)]
+        end
+    end
+    #res[ωn,νn,νn] -= 1.0/χ[ωn,νn]
+    return res
+end
+
+function computeχ(F::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
+    res = Array{T}(undef,2*nBose+1, 2*nFermi, 2*nFermi)
+    for (ωn,ω) in enumerate(-nBose:nBose)
+        res[ωn,:,:] = inv(reshape(F[(ωn-1)*(2*nFermi)*(2*nFermi)+1:(ωn+0)*(2*nFermi)*(2*nFermi)],2*nFermi,2*nFermi))
+        for (νn,ν) in enumerate(-2:2-1)
+            res[ωn,νn,νn] -= 1.0/χ0[(ω,ν)]
+        end
+    end
+    #res[ωn,νn,νn] -= 1.0/χ[ωn,νn]
+    return res
+end
+
