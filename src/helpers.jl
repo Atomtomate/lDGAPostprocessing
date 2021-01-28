@@ -43,15 +43,64 @@ function computeχ(F::SVertex{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}) wh
     return res
 end
 
-function computeχ(F::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
+function computeχ(freqList::Array, F::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
     res = Array{T}(undef,2*nBose+1, 2*nFermi, 2*nFermi)
     for (ωn,ω) in enumerate(-nBose:nBose)
-        res[ωn,:,:] = inv(reshape(F[(ωn-1)*(2*nFermi)*(2*nFermi)+1:(ωn+0)*(2*nFermi)*(2*nFermi)],2*nFermi,2*nFermi))
-        for (νn,ν) in enumerate(-2:2-1)
-            res[ωn,νn,νn] -= 1.0/χ0[(ω,ν)]
+        freqSegment = (ωn-1)*(2*nFermi)*(2*nFermi)+1:(ωn+0)*(2*nFermi)*(2*nFermi)
+        res[ωn,:,:] = -1.0 * inv(reshape(F[freqSegment],2*nFermi,2*nFermi))
+        fermi_grid = freqList[freqSegment]
+        for (νn,fg) in enumerate(fermi_grid[1:2*nFermi])
+            res[ωn,νn,νn] += 1.0/χ0[(ω,fg[3])]
         end
     end
     #res[ωn,νn,νn] -= 1.0/χ[ωn,νn]
     return res
 end
 
+
+function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},3}, arr_sp::Array{Complex{Float64},3}, dirname::String, nBose::Int, nFermi::Int)
+    if isdir(dirname)
+        println("ERROR: Directory already exists. Skipping output")
+        return
+    else
+        mkdir(dirname)
+    end
+    for ωn in 1:size(arr_ch,1)
+        freqSegment = (ωn-1)*(2*nFermi)*(2*nFermi)+1:(ωn+0)*(2*nFermi)*(2*nFermi)
+        freq_sub_grid = freqList[freqSegment]
+        open(dirname * "/" * prefix * lpad(ωn-1, 3, "0"), "w") do f
+            for i in 1:2*nFermi
+                for j in 1:2*nFermi
+                    @printf(f, "  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f\n", 
+                        float(freq_sub_grid[i][1]), float(freq_sub_grid[(i-1)*(2*nFermi)+j][2]), 
+                        float(freq_sub_grid[(i-1)*(2*nFermi)+j][3]),
+                        real(arr_ch[ωn, i, j]), imag(arr_ch[ωn, i, j]),
+                        real(arr_sp[ωn, i, j]), imag(arr_sp[ωn, i, j]))
+                end
+            end
+        end
+    end
+end
+
+function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},1}, arr_sp::Array{Complex{Float64},1}, dirname::String, nBose::Int, nFermi::Int)
+    if isdir(dirname)
+        println("ERROR: Directory already exists. Skipping output")
+        return
+    else
+        mkdir(dirname)
+    end
+    nF2 = (2*nFermi*2*nFermi)
+    for ωn in 1:(2*nBose+1)
+        freqSegment = (ωn-1)*nF2+1:(ωn+0)*nF2
+        freq_sub_grid = freqList[freqSegment]
+        open(dirname * "/" * prefix * lpad(ωn-1, 3, "0"), "w") do f
+            for i in 1:nF2
+                ind = (ωn-1)*nF2+i
+                @printf(f, "  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f\n", 
+                        float(freq_sub_grid[i][1]), float(freq_sub_grid[i][2]), float(freq_sub_grid[i][3]),
+                        real(arr_ch[ind]), imag(arr_ch[ind]),
+                        real(arr_sp[ind]), imag(arr_sp[ind]))
+            end
+        end
+    end
+end
