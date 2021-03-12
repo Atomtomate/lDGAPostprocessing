@@ -6,7 +6,7 @@ using EquivalenceClassesConstructor
 using Test
 using DataStructures
 using JLD2
-include("../vertexIntTriple.jl")
+include("./vertexIntTriple.jl")
 
 #dataPath = "/home/julian/Hamburg/lDGA_shift_tests/data/50_red_nshift"
 dataPath = "/home/julian/Hamburg/lDGA_shift_tests/data/50_red_nshift"
