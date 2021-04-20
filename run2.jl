@@ -5,7 +5,7 @@ using SparseVertex
 using EquivalenceClassesConstructor
 using Test
 using DataStructures
-using JLD2
+using DelimitedFiles, JLD2
 include("./vertexIntTriple.jl")
 
 gridPath = ARGS[1]  # "/scratch/usr/hhpstobb/grids/b10_f20_s1"

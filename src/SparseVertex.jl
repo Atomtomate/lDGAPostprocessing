@@ -1,7 +1,7 @@
 module SparseVertex
 
 using EquivalenceClassesConstructor
-using JLD2
+using DelimitedFiles, JLD2
 using Printf
 using DataStructures
 using LinearAlgebra
