@@ -1,6 +1,6 @@
 function read_vert_chi(fname)
     inp = readdlm(fname, Float64)
-    freq = Int.(inp[:,1:3])
+    freq = Float64.(inp[:,1:3])
     Fup = inp[:,4] + inp[:,5]*1im
     Fdo = inp[:,6] + inp[:,7]*1im
     return freq, Fup, Fdo

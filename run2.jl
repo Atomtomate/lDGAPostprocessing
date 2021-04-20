@@ -1,5 +1,6 @@
 using Pkg
-Pkg.activate(".")
+Pkg.activate(@__DIR__)
+Pkg.instantiate()
 using SparseVertex
 
 using EquivalenceClassesConstructor
@@ -8,12 +9,13 @@ using DataStructures
 using JLD2
 include("./vertexIntTriple.jl")
 
-#dataPath = "/home/julian/Hamburg/lDGA_shift_tests/data/50_red_nshift"
-dataPath = "/home/julian/Hamburg/lDGA_shift_tests/data/50_red_nshift"
+gridPath = ARGS[1]  # "/scratch/usr/hhpstobb/grids/b10_f20_s1"
+dataPath = ARGS[2] # "/scratch/usr/hhpstobb/lDGA/tests/non_qubic/ed_vertex"
 #dataPath = "test/data"
-@load dataPath*"/freqList.jld2" freqRed_map freqList freqList_min parents ops nFermi nBose shift base offset
+@load gridPath*"/freqList.jld2" freqRed_map freqList freqList_min parents ops nFermi nBose shift base offset
+println("Expanding Vertex for nFermi=",nFermi,", nBose=",nBose,", shift=",shift)
 base2 = base*base
-freq_red, Fup_red_data, Fdo_red_data = read_vert_chi(dataPath*"/vert_chi_red") 
+freq_red, Fup_red_data, Fdo_red_data = read_vert_chi(dataPath*"/vert_chi") 
 #fullMap = identityMap(-nBose, nBose, -nFermi, nFermi-1, 0, offset, base)
 #freq_full, Fup_full_data, Fdo_full_data = read_vert_chi("test/data/vert_chi_full")   
 #freq_full, Fup_full_data, Fdo_full_data = read_vert_chi(dataPath*"/../50_full_nshift/vert_chi")   
