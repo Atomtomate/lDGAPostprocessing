@@ -12,7 +12,7 @@ function read_gm_wim(nFreq, filename; storedInverse, storeFull=false)
     end
 
     if size(GFString, 1)*(1 + 1*storeFull) < nFreq
-        throw(BoundsError("nFermFreq in simulation parameters too large!"))
+        throw(ArgumentError("nFermFreq in simulation parameters too large! Got $(size(GFString, 1)) lines but need data for $(nFreq) frequencies."))
     end
     
     tmp = parse.(Float64,hcat(split.(GFString)...)[2:end,:]) # Construct a 2xN array of floats (re,im as 1st index)

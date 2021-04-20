@@ -22,8 +22,8 @@ freq_red, Fup_red_data, Fdo_red_data = read_vert_chi(dataPath*"/vert_chi")
 #sv_do_test_full = SVertex(fullMap, Fdo_full_data, base, offset, nBose, nFermi)
 #χ_full_data = 
 
-gImp = read_gm_wim(nBose+2*nFermi, dataPath*"/gm_wim", storedInverse=false)
-g0 = 1.0 ./ read_gm_wim(nBose+2*nFermi, dataPath*"/g0mand", storedInverse=false)
+gImp = read_gm_wim(nBose+nFermi+1, dataPath*"/gm_wim", storedInverse=false)
+g0 = 1.0 ./ read_gm_wim(nBose+nFermi+1, dataPath*"/g0mand", storedInverse=false)
 χ0_full = SparseVertex.computeχ0(-nBose:nBose, -(nFermi+shift*nBose):(nFermi+shift*nBose)-1, gImp, 25.0)
 #F_den, F_mag = SparseVertex.computeF(freq_full, sv_up_test_full, sv_do_test_full, χ0_full)
 #ind = indices(sv_up_test_full) 
