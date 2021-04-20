@@ -2,7 +2,7 @@ using SparseVertex
 
 using EquivalenceClassesConstructor
 using Test
-using JLD, DelimitedFiles
+using JLD
 
 
 data = load("data/freqList.jld")
