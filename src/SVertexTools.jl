@@ -33,26 +33,26 @@ function full!(res::Array{T,3}, sv::SVertex{T}, indices) where T
     end
 end
 
-function expand_test(Fup_red, Fdo_red, freqList_map, freqList, parents, ops, nBose, nFermi)
+function expand_test(TwoPartGF_upup, TwoPartGF_updo, freqList_map, freqList, parents, ops, nBose, nFermi)
     off(f) = f[1]+nBose+1,f[2]+nFermi+1,f[3]+nFermi+1
     Fup_full = -1 .* ones(Complex{Float64}, length(freqList))
     Fdo_full = -1 .* ones(Complex{Float64}, length(freqList))
     for (k,v) in freqList_map
-        Fup_full[k] = Fup_red[v]
-        Fdo_full[k] = Fdo_red[v]
+        Fup_full[k] = TwoPartGF_upup[v]
+        Fdo_full[k] = TwoPartGF_updo[v]
     end
     return Fup_full, Fdo_full
 end
 
-function expand(Fup_red, Fdo_red, transform!, freqList_map, freqList, parents, ops, nBose, nFermi)
+function expand(TwoPartGF_upup, TwoPartGF_updo, transform!, freqList_map, freqList, parents, ops, nBose, nFermi)
     off(f) = f[1]+nBose+1,f[2]+nFermi+1,f[3]+nFermi+1
-    Fup_full = Array{eltype(Fup_red)}(undef, length(freqList))
-    Fdo_full = Array{eltype(Fdo_red)}(undef, length(freqList))
+    Fup_full = Array{eltype(TwoPartGF_upup)}(undef, length(freqList))
+    Fdo_full = Array{eltype(TwoPartGF_updo)}(undef, length(freqList))
     done = falses(2*nBose,length(freqList))
     for (k,v) in freqList_map
         #println("--- setting $k in full, $v in red")
-        Fup_full[k] = Fup_red[v]
-        Fdo_full[k] = Fdo_red[v]
+        Fup_full[k] = TwoPartGF_upup[v]
+        Fdo_full[k] = TwoPartGF_updo[v]
         done[k] = true
     end
     open = Stack{eltype(parents)}()
