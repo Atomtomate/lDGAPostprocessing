@@ -57,12 +57,7 @@ end
 
 
 function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},3}, arr_sp::Array{Complex{Float64},3}, dirname::String, nBose::Int, nFermi::Int)
-    if isdir(dirname)
-        println("ERROR: Directory already exists. Skipping output")
-        return
-    else
-        mkdir(dirname)
-    end
+    mkpath(dirname)
     for ωn in 1:size(arr_ch,1)
         freqSegment = (ωn-1)*(2*nFermi)*(2*nFermi)+1:(ωn+0)*(2*nFermi)*(2*nFermi)
         freq_sub_grid = freqList[freqSegment]
