@@ -6,6 +6,32 @@ function read_vert_chi(fname)
     return freq, Fup, Fdo
 end
 
+function readGImp(filename; only_positive=false)
+    GFString = open(filename, "r") do f
+        readlines(f)
+    end
+
+
+    tmp = parse.(Float64,hcat(split.(GFString)...)) # Construct a 2xN array of floats (re,im as 1st index)
+    tmpG = tmp[2,:] .+ tmp[3,:].*1im
+    tmpiνₙ = tmp[1,:] .* 1im
+    if only_positive
+        GImp = tmpG
+        iνₙ  = tmpiνₙ
+    else
+        N = 2*size(tmpG,1)
+        NH = size(tmpG,1)
+        GImp = zeros(Complex{Float64}, N)
+        iνₙ  = zeros(Complex{Float64}, N)
+        GImp[1:(NH)] = reverse(conj.(tmpG[1:NH]))
+        GImp[(NH+1):N] = tmpG[1:NH]
+        iνₙ[1:(NH)] = conj.(reverse(tmpiνₙ[1:(NH)]))
+        iνₙ[(NH+1):N] = tmpiνₙ[1:NH]
+    end
+    return iνₙ, GImp
+end
+
+
 function read_gm_wim(nFreq, filename; storedInverse, storeFull=false)
     GFString = open(filename, "r") do f
         readlines(f)

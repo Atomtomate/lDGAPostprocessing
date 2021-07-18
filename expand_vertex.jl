@@ -52,7 +52,9 @@ SparseVertex.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dat
 χDMFTch = permutedims(reshape(χDMFTch, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
 χDMFTsp = permutedims(reshape(χDMFTsp, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
 
-ϵₖ, Vₖ, μ  = read_anderson_parameters(dataPath * "/hubb.andpar");
-U, β, nden    = read_hubb_dat(dataPath * "/hubb.dat");
+ϵₖ, Vₖ, μ    = read_anderson_parameters(dataPath * "/hubb.andpar");
+U, β, nden   = read_hubb_dat(dataPath * "/hubb.dat");
+iνₙ, GImp_ED = readGImp(dataPath*"/gm_wim", only_positive=true)
+E_kin_ED, E_pot_ED  = calc_E_ED(iνₙ[1:length(GImp_ED)], ϵₖ, Vₖ, GImp_ED, nden, U, β, μ)
 
-@save dataPath*"/ED_out.jld2" Γch Γsp χDMFTch χDMFTsp gImp g0 ϵₖ Vₖ μ U β nden
+@save dataPath*"/ED_out.jld2" Γch Γsp χDMFTch χDMFTsp gImp g0 ϵₖ Vₖ μ U β nden E_kin_ED E_pot_ED
