@@ -57,21 +57,16 @@ end
 
 
 function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},3}, arr_sp::Array{Complex{Float64},3}, dirname::String, nBose::Int, nFermi::Int)
-    if isdir(dirname)
-        println("ERROR: Directory already exists. Skipping output")
-        return
-    else
-        mkdir(dirname)
-    end
+    mkpath(dirname)
     for ωn in 1:size(arr_ch,1)
-        freqSegment = (ωn-1)*(2*nFermi)*(2*nFermi)+1:(ωn+0)*(2*nFermi)*(2*nFermi)
+        freqSegment = (ωn-1)*nFermi*nFermi+1:(ωn+0)*nFermi*nFermi
         freq_sub_grid = freqList[freqSegment]
         open(dirname * "/" * prefix * lpad(ωn-1, 3, "0"), "w") do f
-            for i in 1:2*nFermi
-                for j in 1:2*nFermi
+            for i in 1:nFermi
+                for j in 1:nFermi
                     @printf(f, "  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f\n", 
-                        float(freq_sub_grid[i][1]), float(freq_sub_grid[(i-1)*(2*nFermi)+j][2]), 
-                        float(freq_sub_grid[(i-1)*(2*nFermi)+j][3]),
+                        float(freq_sub_grid[i][1]), float(freq_sub_grid[(i-1)*(nFermi)+j][2]), 
+                        float(freq_sub_grid[(i-1)*(nFermi)+j][3]),
                         real(arr_ch[ωn, i, j]), imag(arr_ch[ωn, i, j]),
                         real(arr_sp[ωn, i, j]), imag(arr_sp[ωn, i, j]))
                 end
@@ -80,15 +75,10 @@ function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{F
     end
 end
 
-function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},1}, arr_sp::Array{Complex{Float64},1}, dirname::String, nBose::Int, nFermi::Int)
-    if isdir(dirname)
-        println("ERROR: Directory already exists. Skipping output")
-        return
-    else
-        mkdir(dirname)
-    end
-    nF2 = (2*nFermi*2*nFermi)
-    for ωn in 1:(2*nBose+1)
+function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},1}, arr_sp::Array{Complex{Float64},1}, dirname::String, nFermi::Int)
+    mkpath(dirname)
+    nF2 = nFermi*nFermi
+    for ωn in 1:nBose
         freqSegment = (ωn-1)*nF2+1:(ωn+0)*nF2
         freq_sub_grid = freqList[freqSegment]
         open(dirname * "/" * prefix * lpad(ωn-1, 3, "0"), "w") do f
