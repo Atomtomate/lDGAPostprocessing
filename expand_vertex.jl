@@ -15,7 +15,7 @@ dataPath = ARGS[2] # "/scratch/usr/hhpstobb/lDGA/tests/non_qubic/ed_vertex"
 println("opening: ", gridPath*"/freqList.jld2")
 f = jldopen(gridPath*"/freqList.jld2", "r")
 for k in keys(f)
-    s=symbol(k)
+    s=Symbol(k)
     @eval (($s) = ($(f[k])))
 end
 
