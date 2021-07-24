@@ -12,7 +12,14 @@ gridPath = ARGS[1]  # "/scratch/usr/hhpstobb/grids/b10_f20_s1"
 dataPath = ARGS[2] # "/scratch/usr/hhpstobb/lDGA/tests/non_qubic/ed_vertex"
 β = parse(Float64, ARGS[3])
 
-@load gridPath*"/freqList.jld2" freqRed_map freqList freqList_min parents ops nFermi nBose shift base offset
+println("opening: ", gridPath*"/freqList.jld2")
+f = jldopen(gridPath*"/freqList.jld2", "r")
+for k in keys(f)
+    s=symbol(k)
+    @eval (($s) = ($(f[k])))
+end
+
+#@load gridPath*"/freqList.jld2" freqRed_map freqList freqList_min parents ops nFermi nBose shift base offset
 
 println("Expanding Vertex for nFermi=",nFermi,", nBose=",nBose,", shift=",shift)
 base2 = base*base
@@ -45,8 +52,8 @@ SparseVertex.subtract_ω0!(freqList, TwoPartGF_updo, gImp, β)
 Γch = -1.0 .* SparseVertex.computeχ(freqList, χDMFTch, χ0_full,nBose,nFermi)
 Γsp = -1.0 .* SparseVertex.computeχ(freqList, χDMFTsp, χ0_full,nBose,nFermi)
 
-SparseVertex.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", nBose, nFermi)
-SparseVertex.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", nBose, nFermi)
+#SparseVertex.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", nBose, nFermi)
+#SparseVertex.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", nBose, nFermi)
 #SparseVertex.write_fort_dir("chi", freqList, χDMFTch, χDMFTsp, dataPath*"/chi_dir", nBose, nFermi)
 
 χDMFTch = permutedims(reshape(χDMFTch, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
