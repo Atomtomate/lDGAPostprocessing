@@ -75,7 +75,7 @@ function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{F
     end
 end
 
-function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},1}, arr_sp::Array{Complex{Float64},1}, dirname::String, nFermi::Int)
+function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},1}, arr_sp::Array{Complex{Float64},1}, dirname::String, nBose::Int, nFermi::Int)
     mkpath(dirname)
     nF2 = nFermi*nFermi
     for ωn in 1:nBose
@@ -91,4 +91,23 @@ function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{F
             end
         end
     end
+end
+
+function calc_E_ED(iνₙ, ϵₖ, Vₖ, GImp, n, U, β, μ; full=false)
+    E_kin = 0.0
+    E_pot = 0.0
+    vk = sum(Vₖ .^ 2)
+    Σ_hartree = n * U/2
+    E_pot_tail = (U^2)/2 * n * (1-n/2) - Σ_hartree*(Σ_hartree-μ)
+    E_kin_tail = vk
+
+    for n in 1:length(GImp)
+        Δ_n = sum((Vₖ .^ 2) ./ (iνₙ[n] .- ϵₖ))
+        Σ_n = iνₙ[n] .- Δ_n .- 1.0 ./ GImp[n] .+ μ
+        E_kin += 2*real(GImp[n] * Δ_n - E_kin_tail/(iνₙ[n]^2))
+        E_pot += 2*real(GImp[n] * Σ_n - E_pot_tail/(iνₙ[n]^2))
+    end
+    E_kin = E_kin .* (2/β) - (β/2) .* E_kin_tail
+    E_pot = E_pot .* (1/β) .+ 0.5*Σ_hartree .- (β/4) .* E_pot_tail
+    return E_kin, E_pot
 end
