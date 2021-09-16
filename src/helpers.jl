@@ -20,16 +20,12 @@ function FUpDo_from_χDMFT(χupdo, GImp, freqFile, β)
             i = f[1] + n_iω+1
             j = f[2] + n_iν+1 + trunc(Int, shift*f[1]/2)
             k = f[3] + n_iν+1 + trunc(Int, shift*f[1]/2)
-    #TODO: fix different permdims in file and julia code (inconsistency!, names axes?)
             FUpDo[i,j,k] = χupdo[i,j,k]/(β^2 * get_symm_f(GImp,f[2]) * get_symm_f(GImp,f[1]+f[2])
                                * get_symm_f(GImp,f[3]) * get_symm_f(GImp,f[1]+f[3]))
         end
     end
     return FUpDo
 end
-
-
-"""
 
 function subtract_ω0!(freqList::Array, arr::Array{T}, gImp::Array{Complex{Float64}, 1}, β::Float64) where T <: Number
     for i in 1:size(freqList,1)
