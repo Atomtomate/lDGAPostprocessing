@@ -81,4 +81,20 @@ U, β, nden   = read_hubb_dat(dataPath * "/hubb.dat");
 iνₙ, GImp_ED = readGImp(dataPath*"/gm_wim", only_positive=true)
 E_kin_DMFT, E_pot_DMFT  = calc_E_ED(iνₙ[1:length(GImp_ED)], ϵₖ, Vₖ, GImp_ED, nden, U, β, μ)
 
-@save dataPath*"/ED_out.jld2" Γch Γsp χDMFTch χDMFTsp gImp g0 ϵₖ Vₖ μ U β nden E_kin_DMFT E_pot_DMFT
+jldopen(dataPath*"/ED_out.jld2", "w") do f
+    f["Γch"] = Γch
+    f["Γsp"] = Γsp
+    f["χDMFTch"] = χDMFTch
+    f["χDMFTsp"] = χDMFTsp
+    f["gImp"] = gImp
+    f["g0"] = g0
+    f["ϵₖ"] = ϵₖ
+    f["Vₖ"] = Vₖ
+    f["μ"] = μ
+    f["U"] = U
+    f["β"] = β
+    f["nden"] = nden
+    f["E_kin_DMFT"] = E_kin_DMFT
+    f["E_pot_DMFT"] = E_pot_DMFT
+    f["FUpDo"] = FUpDo_from_χDMFT(0.5 .* (χDMFTch - χDMFTsp), gImp, gridPath*"/freqList.jld2", β)
+end
