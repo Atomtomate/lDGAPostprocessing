@@ -75,7 +75,7 @@ function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{F
     end
 end
 
-function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},1}, arr_sp::Array{Complex{Float64},1}, dirname::String, nFermi::Int)
+function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},1}, arr_sp::Array{Complex{Float64},1}, dirname::String, nBose::Int, nFermi::Int)
     mkpath(dirname)
     nF2 = nFermi*nFermi
     for ωn in 1:nBose

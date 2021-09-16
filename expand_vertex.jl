@@ -70,9 +70,8 @@ SparseVertex.subtract_ω0!(freqList, TwoPartGF_updo, gImp, β)
 Γch = -1.0 .* SparseVertex.computeχ(freqList, χDMFTch, χ0_full,nBose,nFermi)
 Γsp = -1.0 .* SparseVertex.computeχ(freqList, χDMFTsp, χ0_full,nBose,nFermi)
 
-#SparseVertex.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", nBose, nFermi)
-#SparseVertex.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", nBose, nFermi)
-#SparseVertex.write_fort_dir("chi", freqList, χDMFTch, χDMFTsp, dataPath*"/chi_dir", nBose, nFermi)
+SparseVertex.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
+SparseVertex.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
 
 χDMFTch = permutedims(reshape(χDMFTch, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
 χDMFTsp = permutedims(reshape(χDMFTsp, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
