@@ -1,6 +1,6 @@
 using Pkg
 Pkg.activate(@__DIR__)
-using SparseVertex
+using lDGAPostprocessing
 
 using EquivalenceClassesConstructor
 using Test
@@ -58,20 +58,27 @@ flush(stdout)
 
 gImp = read_gm_wim(2*(nBose+nFermi+1), dataPath*"/gm_wim", storedInverse=false)
 g0 = 1.0 ./ read_gm_wim(2*(nBose+nFermi+1), dataPath*"/g0mand", storedInverse=false)
-χ0_full = SparseVertex.computeχ0(-nBose:nBose, -(nFermi+shift*nBose):(nFermi+shift*nBose)-1, gImp, β)
-#F_den, F_mag = SparseVertex.computeF(freq_full, sv_up_test_full, sv_do_test_full, χ0_full)
+χ0_full = lDGAPostprocessing.computeχ0(-nBose:nBose, -(nFermi+shift*nBose):(nFermi+shift*nBose)-1, gImp, β)
+#F_den, F_mag = lDGAPostprocessing.computeF(freq_full, sv_up_test_full, sv_do_test_full, χ0_full)
 #ind = indices(sv_up_test_full) 
 
 
-SparseVertex.subtract_ω0!(freqList, TwoPartGF_upup, gImp, β)
-SparseVertex.subtract_ω0!(freqList, TwoPartGF_updo, gImp, β)
+lDGAPostprocessing.subtract_ω0!(freqList, TwoPartGF_upup, gImp, β)
+lDGAPostprocessing.subtract_ω0!(freqList, TwoPartGF_updo, gImp, β)
 χDMFTch = TwoPartGF_upup .+ TwoPartGF_updo
 χDMFTsp = TwoPartGF_upup .- TwoPartGF_updo
-Γch = -1.0 .* SparseVertex.computeχ(freqList, χDMFTch, χ0_full,nBose,nFermi)
-Γsp = -1.0 .* SparseVertex.computeχ(freqList, χDMFTsp, χ0_full,nBose,nFermi)
+Γch = -1.0 .* lDGAPostprocessing.computeχ(freqList, χDMFTch, χ0_full,nBose,nFermi)
+Γsp = -1.0 .* lDGAPostprocessing.computeχ(freqList, χDMFTsp, χ0_full,nBose,nFermi)
 
-SparseVertex.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
-SparseVertex.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
+println("Done calculating vertex!")
+flush(stderr)
+flush(stdout)
+# TODO: activate this via write_fortran flag
+#lDGAPostprocessing.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
+#lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
+# TODO: find a way to keep memory consumption low
+TwoPartGF_updo = nothing
+TwoPartGF_upup = nothing
 
 χDMFTch = permutedims(reshape(χDMFTch, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
 χDMFTsp = permutedims(reshape(χDMFTsp, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
@@ -80,12 +87,16 @@ SparseVertex.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dat
 U, β, nden   = read_hubb_dat(dataPath * "/hubb.dat");
 iνₙ, GImp_ED = readGImp(dataPath*"/gm_wim", only_positive=true)
 E_kin_DMFT, E_pot_DMFT  = calc_E_ED(iνₙ[1:length(GImp_ED)], ϵₖ, Vₖ, GImp_ED, nden, U, β, μ)
+χ_ch_asympt, χ_sp_asympt, χ_pp_asympt = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : [], [], []
 
 jldopen(dataPath*"/ED_out.jld2", "w") do f
     f["Γch"] = Γch
     f["Γsp"] = Γsp
     f["χDMFTch"] = χDMFTch
     f["χDMFTsp"] = χDMFTsp
+    f["χ_ch_asympt"] = χ_ch_asympt
+    f["χ_sp_asympt"] = χ_sp_asympt
+    f["χ_pp_asympt"] = χ_pp_asympt
     f["gImp"] = gImp
     f["g0"] = g0
     f["ϵₖ"] = ϵₖ
@@ -96,5 +107,5 @@ jldopen(dataPath*"/ED_out.jld2", "w") do f
     f["nden"] = nden
     f["E_kin_DMFT"] = E_kin_DMFT
     f["E_pot_DMFT"] = E_pot_DMFT
-    f["FUpDo"] = FUpDo_from_χDMFT(0.5 .* (χDMFTch - χDMFTsp), gImp, gridPath*"/freqList.jld2", β)
+    f["FUpDo"] = FUpDo_from_χDMFT(0.5 .* (χDMFTch .- χDMFTsp), gImp, gridPath*"/freqList.jld2", β)
 end

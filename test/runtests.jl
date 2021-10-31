@@ -1,4 +1,4 @@
-using SparseVertex
+using lDGAPostprocessing
 
 using EquivalenceClassesConstructor
 using Test
@@ -29,7 +29,7 @@ sv_do_test_red = SVertex(redMap, Fdo_red_data, base, offset, nBose, nFermi)
 sv_up_test_full = SVertex(fullMap, Fup_full_data, base, offset, nBose, nFermi)
 sv_do_test_full = SVertex(fullMap, Fdo_full_data, base, offset, nBose, nFermi)
 
-@testset "SparseVertex" begin
+@testset "lDGAPostprocessing" begin
     @testset "Vertex" begin
         include("SVertex.jl")   
     end

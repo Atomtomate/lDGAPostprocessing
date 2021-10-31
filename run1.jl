@@ -1,4 +1,4 @@
-using SparseVertex
+using lDGAPostprocessing
 
 using EquivalenceClassesConstructor
 using Test
@@ -32,8 +32,8 @@ sv_up_test_full = SVertex(fullMap, Fup_full_data, base, offset, nBose, nFermi)
 sv_do_test_full = SVertex(fullMap, Fdo_full_data, base, offset, nBose, nFermi)
 
 gImp = read_gm_wim(nBose+2*nFermi, "test/data/gm_wim", storedInverse=false)
-χ0 = SparseVertex.computeχ0(-5:5, -5:4, gImp, 25.0)
-F_den, F_mag = SparseVertex.computeF(freq_full, sv_up_test_full, sv_do_test_full, χ0)
+χ0 = lDGAPostprocessing.computeχ0(-5:5, -5:4, gImp, 25.0)
+F_den, F_mag = lDGAPostprocessing.computeF(freq_full, sv_up_test_full, sv_do_test_full, χ0)
 
 
 ind = indices(sv_up_test_full) 

@@ -1,9 +1,18 @@
-function read_vert_chi(fname)
+function read_vert_chi(fname::String)
     inp = readdlm(fname, Float64)
     freq = Float64.(inp[:,1:3])
     Fup = inp[:,4] + inp[:,5]*1im
     Fdo = inp[:,6] + inp[:,7]*1im
     return freq, Fup, Fdo
+end
+
+#omega, upup, upup, updo updo, pp, pp
+function read_chi_asympt(fname::String)
+    inp = readdlm(fname, Float64)
+    χch = 0.5 .* (inp[:,2] + inp[:,3]*1im  + inp[:,4] + inp[:,5]*1im)
+    χsp = 0.5 .* (inp[:,2] + inp[:,3]*1im  - inp[:,4] - inp[:,5]*1im)
+    χpp = inp[:,6] + inp[:,7]*1im
+    return χch, χsp, χpp
 end
 
 function readGImp(filename; only_positive=false)
