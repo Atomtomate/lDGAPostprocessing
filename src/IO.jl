@@ -9,8 +9,8 @@ end
 #omega, upup, upup, updo updo, pp, pp
 function read_chi_asympt(fname::String)
     inp = readdlm(fname, Float64)
-    χch = 0.5 .* (inp[:,2] + inp[:,3]*1im  + inp[:,4] + inp[:,5]*1im)
-    χsp = 0.5 .* (inp[:,2] + inp[:,3]*1im  - inp[:,4] - inp[:,5]*1im)
+    χch = (inp[:,2] + inp[:,3]*1im  + inp[:,4] + inp[:,5]*1im)
+    χsp = (inp[:,2] + inp[:,3]*1im  - inp[:,4] - inp[:,5]*1im)
     χpp = inp[:,6] + inp[:,7]*1im
     return χch, χsp, χpp
 end

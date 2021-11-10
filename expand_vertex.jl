@@ -87,7 +87,10 @@ TwoPartGF_upup = nothing
 U, β, nden   = read_hubb_dat(dataPath * "/hubb.dat");
 iνₙ, GImp_ED = readGImp(dataPath*"/gm_wim", only_positive=true)
 E_kin_DMFT, E_pot_DMFT  = calc_E_ED(iνₙ[1:length(GImp_ED)], ϵₖ, Vₖ, GImp_ED, nden, U, β, μ)
-χ_ch_asympt, χ_sp_asympt, χ_pp_asympt = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : [], [], []
+res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : ([], [], [])
+χ_ch_asympt, χ_sp_asympt, χ_pp_asympt = res
+
+gImp = read_gm_wim(6*(nBose+nFermi+1), dataPath*"/gm_wim", storedInverse=false)
 
 jldopen(dataPath*"/ED_out.jld2", "w") do f
     f["Γch"] = Γch
@@ -108,4 +111,7 @@ jldopen(dataPath*"/ED_out.jld2", "w") do f
     f["E_kin_DMFT"] = E_kin_DMFT
     f["E_pot_DMFT"] = E_pot_DMFT
     f["FUpDo"] = FUpDo_from_χDMFT(0.5 .* (χDMFTch .- χDMFTsp), gImp, gridPath*"/freqList.jld2", β)
+    f["grid_shift"] = shift
+    f["grid_nBose"] = nBose
+    f["grid_nFermi"] = nFermi
 end
