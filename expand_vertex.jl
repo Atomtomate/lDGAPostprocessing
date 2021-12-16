@@ -74,8 +74,8 @@ println("Done calculating vertex!")
 flush(stderr)
 flush(stdout)
 # TODO: activate this via write_fortran flag
-#lDGAPostprocessing.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
-#lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
+lDGAPostprocessing.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
+lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
 # TODO: find a way to keep memory consumption low
 TwoPartGF_updo = nothing
 TwoPartGF_upup = nothing
@@ -90,7 +90,8 @@ E_kin_DMFT, E_pot_DMFT  = calc_E_ED(iνₙ[1:length(GImp_ED)], ϵₖ, Vₖ, GImp
 res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : ([], [], [])
 χ_ch_asympt, χ_sp_asympt, χ_pp_asympt = res
 
-gImp = read_gm_wim(6*(nBose+nFermi+1), dataPath*"/gm_wim", storedInverse=false)
+gImp = read_gm_wim(10*(nBose+nFermi+1), dataPath*"/gm_wim", storedInverse=false)
+g0 = 1.0 ./ read_gm_wim(10*(nBose+nFermi+1), dataPath*"/g0mand", storedInverse=false)
 
 jldopen(dataPath*"/ED_out.jld2", "w") do f
     f["Γch"] = Γch
