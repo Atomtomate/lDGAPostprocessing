@@ -6,6 +6,23 @@ function read_vert_chi(fname::String)
     return freq, Fup, Fdo
 end
 
+function read_λ_asympt(dir::String)
+    files = readdir(dir)
+    Niω = length(files)
+    Niν = countlines(joinpath(dir,files[1]))
+    λup = Array{ComplexF64, 2}(undef, Niν, Niω)
+    λdo = Array{ComplexF64, 2}(undef, Niν, Niω)
+    λpp = Array{ComplexF64, 2}(undef, Niν, Niω)
+    for f in files
+        iω = parse(Int, f[end-2:end]) + 1
+        inp = readdlm(joinpath(dir,f))
+        λup[:,iω] = inp[:,2] + inp[:,3]*1im 
+        λdo[:,iω] = inp[:,4] + inp[:,5]*1im 
+        λpp[:,iω] = inp[:,6] + inp[:,7]*1im 
+    end
+    return λup, λdo, λpp
+end
+
 #omega, upup, upup, updo updo, pp, pp
 function read_chi_asympt(fname::String)
     inp = readdlm(fname, Float64)

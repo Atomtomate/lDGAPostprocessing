@@ -74,8 +74,8 @@ println("Done calculating vertex!")
 flush(stderr)
 flush(stdout)
 # TODO: activate this via write_fortran flag
-lDGAPostprocessing.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
-lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
+#lDGAPostprocessing.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
+#lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
 # TODO: find a way to keep memory consumption low
 TwoPartGF_updo = nothing
 TwoPartGF_upup = nothing
