@@ -57,17 +57,14 @@ function computeF(freqList::AbstractArray{Int,2}, F_up::SVertex{T}, F_do::SVerte
     return F_den, F_mag
 end
 
-function computeχ!(freq_list::AbstractArray{Int,2}, F_sp::Array{Complex{Float64}}, χ0::Dict{Tuple{Int,Int},Complex{Float64}})
-end
-
-function computeχ(freqList::Array, F::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
+function computeΓ(freqList::Array, χ::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
     res = Array{T}(undef,2*nBose+1, 2*nFermi, 2*nFermi)
     for (ωn,ω) in enumerate(-nBose:nBose)
         freqSegment = (ωn-1)*(2*nFermi)*(2*nFermi)+1:(ωn+0)*(2*nFermi)*(2*nFermi)
-        res[ωn,:,:] = -1.0 * inv(reshape(F[freqSegment],2*nFermi,2*nFermi))
+        res[ωn,:,:] = inv(reshape(χ[freqSegment],2*nFermi,2*nFermi))
         fermi_grid = freqList[freqSegment]
         for (νn,fg) in enumerate(fermi_grid[1:2*nFermi])
-            res[ωn,νn,νn] += 1.0/χ0[(ω,fg[3])]
+            res[ωn,νn,νn] -= 1.0/χ0[(ω,fg[3])]
         end
     end
     return res

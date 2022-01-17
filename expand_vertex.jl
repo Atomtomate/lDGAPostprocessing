@@ -67,8 +67,8 @@ lDGAPostprocessing.subtract_ω0!(freqList, TwoPartGF_upup, gImp, β)
 lDGAPostprocessing.subtract_ω0!(freqList, TwoPartGF_updo, gImp, β)
 χDMFTch = TwoPartGF_upup .+ TwoPartGF_updo
 χDMFTsp = TwoPartGF_upup .- TwoPartGF_updo
-Γch = -1.0 .* lDGAPostprocessing.computeχ(freqList, χDMFTch, χ0_full,nBose,nFermi)
-Γsp = -1.0 .* lDGAPostprocessing.computeχ(freqList, χDMFTsp, χ0_full,nBose,nFermi)
+Γch = -1.0 .* lDGAPostprocessing.computeΓ(freqList, χDMFTch, χ0_full,nBose,nFermi)
+Γsp = -1.0 .* lDGAPostprocessing.computeΓ(freqList, χDMFTsp, χ0_full,nBose,nFermi)
 
 println("Done calculating vertex!")
 flush(stderr)
