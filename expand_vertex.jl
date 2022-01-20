@@ -50,7 +50,7 @@ function expand_TwoPartGF(freqFile, dataPath)
     return TwoPartGF_upup, TwoPartGF_updo
 end
 
-TwoPartGF_upup, TwoPartGF_updo =  expand_TwoPartGF(gridPath*"/freqList.jld2", dataPath)
+TwoPartGF_upup, TwoPartGF_updo = expand_TwoPartGF(gridPath*"/freqList.jld2", dataPath)
 println("Done expanding!")
 flush(stderr)
 flush(stdout)
@@ -63,8 +63,8 @@ g0 = 1.0 ./ read_gm_wim(2*(nBose+nFermi+1), dataPath*"/g0mand", storedInverse=fa
 #ind = indices(sv_up_test_full) 
 
 
-lDGAPostprocessing.subtract_ω0!(freqList, TwoPartGF_upup, gImp, β)
-lDGAPostprocessing.subtract_ω0!(freqList, TwoPartGF_updo, gImp, β)
+lDGAPostprocessing.add_χ₀!(freqList, TwoPartGF_upup, gImp, β)
+lDGAPostprocessing.add_χ₀!(freqList, TwoPartGF_updo, gImp, β)
 χDMFTch = TwoPartGF_upup .+ TwoPartGF_updo
 χDMFTsp = TwoPartGF_upup .- TwoPartGF_updo
 Γch = -1.0 .* lDGAPostprocessing.computeΓ(freqList, χDMFTch, χ0_full,nBose,nFermi)
@@ -74,8 +74,9 @@ println("Done calculating vertex!")
 flush(stderr)
 flush(stdout)
 # TODO: activate this via write_fortran flag
-#lDGAPostprocessing.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
-#lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
+lDGAPostprocessing.write_vert_chi(freqList, TwoPartGF_updo, TwoPartGF_upup, dataPath, 2*nBose+1, 2*nFermi)
+lDGAPostprocessing.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
+lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
 # TODO: find a way to keep memory consumption low
 TwoPartGF_updo = nothing
 TwoPartGF_upup = nothing

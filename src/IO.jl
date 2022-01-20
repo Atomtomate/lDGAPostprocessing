@@ -133,3 +133,51 @@ function read_anderson_parameters(file)
     end
     return convert(Array{Float64,1}, ϵₖ), convert(Array{Float64,1}, Vₖ), μ
 end
+
+function write_vert_chi(freqList::Array, ver::Array{Complex{Float64},1}, verdo::Array{Complex{Float64},1}, dirname::String, nBose::Int, nFermi::Int)
+    open(dirname * "/vert_chi", "w") do f
+        for (i,freq) in enumerate(freqList)
+            @printf(f, "  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f\n", 
+                    float(freq[1]), float(freq[2]), float(freq[3]),
+                real(ver[i]), imag(ver[i]),
+                real(verdo[i]), imag(verdo[i]))
+        end
+    end
+end
+
+function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},3}, arr_sp::Array{Complex{Float64},3}, dirname::String, nBose::Int, nFermi::Int)
+    mkpath(dirname)
+    for ωn in 1:size(arr_ch,1)
+        freqSegment = (ωn-1)*nFermi*nFermi+1:(ωn+0)*nFermi*nFermi
+        freq_sub_grid = freqList[freqSegment]
+        open(dirname * "/" * prefix * lpad(ωn-1, 3, "0"), "w") do f
+            for i in 1:nFermi
+                for j in 1:nFermi
+                    @printf(f, "  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f\n", 
+                        float(freq_sub_grid[i][1]), float(freq_sub_grid[(i-1)*(nFermi)+j][2]), 
+                        float(freq_sub_grid[(i-1)*(nFermi)+j][3]),
+                        real(arr_ch[ωn, i, j]), imag(arr_ch[ωn, i, j]),
+                        real(arr_sp[ωn, i, j]), imag(arr_sp[ωn, i, j]))
+                end
+            end
+        end
+    end
+end
+
+function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},1}, arr_sp::Array{Complex{Float64},1}, dirname::String, nBose::Int, nFermi::Int)
+    mkpath(dirname)
+    nF2 = nFermi*nFermi
+    for ωn in 1:nBose
+        freqSegment = (ωn-1)*nF2+1:(ωn+0)*nF2
+        freq_sub_grid = freqList[freqSegment]
+        open(dirname * "/" * prefix * lpad(ωn-1, 3, "0"), "w") do f
+            for i in 1:nF2
+                ind = (ωn-1)*nF2+i
+                @printf(f, "  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f\n", 
+                        float(freq_sub_grid[i][1]), float(freq_sub_grid[i][2]), float(freq_sub_grid[i][3]),
+                        real(arr_ch[ind]), imag(arr_ch[ind]),
+                        real(arr_sp[ind]), imag(arr_sp[ind]))
+            end
+        end
+    end
+end

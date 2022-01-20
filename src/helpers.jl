@@ -27,7 +27,7 @@ function FUpDo_from_χDMFT(χupdo, GImp, freqFile, β)
     return FUpDo
 end
 
-function subtract_ω0!(freqList::Array, arr::Array{T}, gImp::Array{Complex{Float64}, 1}, β::Float64) where T <: Number
+function add_χ₀!(freqList::Array, arr::Array{T}, gImp::Array{Complex{Float64}, 1}, β::Float64) where T <: Number
     for i in 1:size(freqList,1)
         ω, ν, νp = freqList[i]
         if ω == 0
@@ -68,44 +68,6 @@ function computeΓ(freqList::Array, χ::Array{T,1}, χ0::Dict{Tuple{Int,Int},Com
         end
     end
     return res
-end
-
-
-function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},3}, arr_sp::Array{Complex{Float64},3}, dirname::String, nBose::Int, nFermi::Int)
-    mkpath(dirname)
-    for ωn in 1:size(arr_ch,1)
-        freqSegment = (ωn-1)*nFermi*nFermi+1:(ωn+0)*nFermi*nFermi
-        freq_sub_grid = freqList[freqSegment]
-        open(dirname * "/" * prefix * lpad(ωn-1, 3, "0"), "w") do f
-            for i in 1:nFermi
-                for j in 1:nFermi
-                    @printf(f, "  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f\n", 
-                        float(freq_sub_grid[i][1]), float(freq_sub_grid[(i-1)*(nFermi)+j][2]), 
-                        float(freq_sub_grid[(i-1)*(nFermi)+j][3]),
-                        real(arr_ch[ωn, i, j]), imag(arr_ch[ωn, i, j]),
-                        real(arr_sp[ωn, i, j]), imag(arr_sp[ωn, i, j]))
-                end
-            end
-        end
-    end
-end
-
-function write_fort_dir(prefix::String, freqList::Array, arr_ch::Array{Complex{Float64},1}, arr_sp::Array{Complex{Float64},1}, dirname::String, nBose::Int, nFermi::Int)
-    mkpath(dirname)
-    nF2 = nFermi*nFermi
-    for ωn in 1:nBose
-        freqSegment = (ωn-1)*nF2+1:(ωn+0)*nF2
-        freq_sub_grid = freqList[freqSegment]
-        open(dirname * "/" * prefix * lpad(ωn-1, 3, "0"), "w") do f
-            for i in 1:nF2
-                ind = (ωn-1)*nF2+i
-                @printf(f, "  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f\n", 
-                        float(freq_sub_grid[i][1]), float(freq_sub_grid[i][2]), float(freq_sub_grid[i][3]),
-                        real(arr_ch[ind]), imag(arr_ch[ind]),
-                        real(arr_sp[ind]), imag(arr_sp[ind]))
-            end
-        end
-    end
 end
 
 function calc_E_ED(iνₙ, ϵₖ, Vₖ, GImp, n, U, β, μ; full=false)
