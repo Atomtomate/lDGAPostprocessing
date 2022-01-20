@@ -55,27 +55,26 @@ println("Done expanding!")
 flush(stderr)
 flush(stdout)
 
-
-gImp = read_gm_wim(2*(nBose+nFermi+1), dataPath*"/gm_wim", storedInverse=false)
-g0 = 1.0 ./ read_gm_wim(2*(nBose+nFermi+1), dataPath*"/g0mand", storedInverse=false)
+gImp    = read_gm_wim(2*(nBose+nFermi+1), dataPath*"/gm_wim", storedInverse=false)
+g0      = 1.0 ./ read_gm_wim(2*(nBose+nFermi+1), dataPath*"/g0mand", storedInverse=false)
 χ0_full = lDGAPostprocessing.computeχ0(-nBose:nBose, -(nFermi+shift*nBose):(nFermi+shift*nBose)-1, gImp, β)
 #F_den, F_mag = lDGAPostprocessing.computeF(freq_full, sv_up_test_full, sv_do_test_full, χ0_full)
 #ind = indices(sv_up_test_full) 
 
 
-lDGAPostprocessing.add_χ₀!(freqList, TwoPartGF_upup, gImp, β)
-lDGAPostprocessing.add_χ₀!(freqList, TwoPartGF_updo, gImp, β)
 χDMFTch = TwoPartGF_upup .+ TwoPartGF_updo
 χDMFTsp = TwoPartGF_upup .- TwoPartGF_updo
-Γch = -1.0 .* lDGAPostprocessing.computeΓ(freqList, χDMFTch, χ0_full,nBose,nFermi)
-Γsp = -1.0 .* lDGAPostprocessing.computeΓ(freqList, χDMFTsp, χ0_full,nBose,nFermi)
+Γch     = -1.0 .* lDGAPostprocessing.computeΓ(freqList, χDMFTch, χ0_full,nBose,nFermi)
+Γsp     = -1.0 .* lDGAPostprocessing.computeΓ(freqList, χDMFTsp, χ0_full,nBose,nFermi)
+lDGAPostprocessing.add_χ₀!(freqList, TwoPartGF_upup, gImp, β)
+lDGAPostprocessing.add_χ₀!(freqList, TwoPartGF_updo, gImp, β)
 
 println("Done calculating vertex!")
 flush(stderr)
 flush(stdout)
 # TODO: activate this via write_fortran flag
-lDGAPostprocessing.write_vert_chi(freqList, TwoPartGF_updo, TwoPartGF_upup, dataPath, 2*nBose+1, 2*nFermi)
-lDGAPostprocessing.write_fort_dir("gamma", freqList, Γch, Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
+lDGAPostprocessing.write_vert_chi(freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath, 2*nBose+1, 2*nFermi)
+lDGAPostprocessing.write_fort_dir("gamma", freqList, -Γch, -Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
 lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
 # TODO: find a way to keep memory consumption low
 TwoPartGF_updo = nothing
