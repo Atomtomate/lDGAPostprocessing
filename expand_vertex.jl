@@ -57,39 +57,37 @@ flush(stdout)
 
 gImp    = read_gm_wim(4*(nBose+nFermi+1), dataPath*"/gm_wim", storedInverse=false)
 g0      = 1.0 ./ read_gm_wim(4*(nBose+nFermi+1), dataPath*"/g0mand", storedInverse=false)
-χ0_full = lDGAPostprocessing.computeχ0(-nBose:nBose, -(nFermi+shift*nBose):(nFermi+shift*nBose)-1, gImp, β)
+χ0_full = lDGAPostprocessing.computeχ0(-nBose:nBose, -(nFermi+2*nBose):(nFermi+2*nBose)-1, gImp, β)
 #F_den, F_mag = lDGAPostprocessing.computeF(freq_full, sv_up_test_full, sv_do_test_full, χ0_full)
 #ind = indices(sv_up_test_full) 
 
-    Γch     = -1.0 .* lDGAPostprocessing.computeΓ(freqList, TwoPartGF_upup .+ TwoPartGF_updo, χ0_full,nBose,nFermi)
-    Γsp     = -1.0 .* lDGAPostprocessing.computeΓ(freqList, TwoPartGF_upup .- TwoPartGF_updo, χ0_full,nBose,nFermi)
-    lDGAPostprocessing.add_χ₀!(freqList, TwoPartGF_upup, gImp, β)
-    lDGAPostprocessing.add_χ₀!(freqList, TwoPartGF_updo, gImp, β)
-    println("Done calculating vertex!")
-    flush(stderr)
-    flush(stdout)
-    # TODO: activate this via write_fortran flag
-    #lDGAPostprocessing.write_vert_chi(freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath, 2*nBose+1, 2*nFermi)
-    #lDGAPostprocessing.write_fort_dir("gamma", freqList, -Γch, -Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
-    #lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
-    # TODO: find a way to keep memory consumption low
+lDGAPostprocessing.add_χ₀_ω₀!(freqList, TwoPartGF_upup, gImp, β)
+lDGAPostprocessing.add_χ₀_ω₀!(freqList, TwoPartGF_updo, gImp, β)
+Γch = -1.0 .* lDGAPostprocessing.computeΓ(freqList, TwoPartGF_upup .+ TwoPartGF_updo, χ0_full,nBose,nFermi)
+Γsp = -1.0 .* lDGAPostprocessing.computeΓ(freqList, TwoPartGF_upup .- TwoPartGF_updo, χ0_full,nBose,nFermi)
+println("Done calculating vertex!")
+flush(stderr)
+flush(stdout)
+# TODO: activate this via write_fortran flag
+#lDGAPostprocessing.write_vert_chi(freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath, 2*nBose+1, 2*nFermi)
+lDGAPostprocessing.write_fort_dir("gamma", freqList, -Γch, -Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
+lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
+# TODO: find a way to keep memory consumption low
 
-    println("tmp: after permute")
-    flush(stderr)
-    flush(stdout)
-
-
-    ϵₖ, Vₖ, μ    = read_anderson_parameters(dataPath * "/hubb.andpar");
-    U, β, nden   = read_hubb_dat(dataPath * "/hubb.dat");
-    iνₙ, GImp_ED = readGImp(dataPath*"/gm_wim", only_positive=true)
-    E_kin_DMFT, E_pot_DMFT  = calc_E_ED(iνₙ[1:length(GImp_ED)], ϵₖ, Vₖ, GImp_ED, nden, U, β, μ)
-    res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : ([], [], [])
-    χ_ch_asympt, χ_sp_asympt, χ_pp_asympt = res
+println("tmp: after permute")
+flush(stderr)
+flush(stdout)
+ϵₖ, Vₖ, μ    = read_anderson_parameters(dataPath * "/hubb.andpar");
+U, β, nden   = read_hubb_dat(dataPath * "/hubb.dat");
+iνₙ, GImp_ED = readGImp(dataPath*"/gm_wim", only_positive=true)
+E_kin_DMFT, E_pot_DMFT  = calc_E_ED(iνₙ[1:length(GImp_ED)], ϵₖ, Vₖ, GImp_ED, nden, U, β, μ)
+res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : ([], [], [])
+χ_ch_asympt, χ_sp_asympt, χ_pp_asympt = res
 
 
-    println("tmp: before write")
-    flush(stderr)
-    flush(stdout)
+println("tmp: before write")
+flush(stderr)
+flush(stdout)
 
 jldopen(dataPath*"/ED_out.jld2", "w") do f
     f["Γch"] = Γch

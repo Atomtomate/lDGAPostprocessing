@@ -27,7 +27,7 @@ function FUpDo_from_χDMFT(χupdo, GImp, freqFile, β)
     return FUpDo
 end
 
-function add_χ₀!(freqList::Array, arr::Array{T}, gImp::Array{Complex{Float64}, 1}, β::Float64) where T <: Number
+function add_χ₀_ω₀!(freqList::Array, arr::Array{T}, gImp::Array{Complex{Float64}, 1}, β::Float64) where T <: Number
     for i in 1:size(freqList,1)
         ω, ν, νp = freqList[i]
         if ω == 0
@@ -61,7 +61,7 @@ function computeΓ(freqList::Array, χ::Array{T,1}, χ0::Dict{Tuple{Int,Int},Com
     res = Array{T}(undef,2*nBose+1, 2*nFermi, 2*nFermi)
     for (ωn,ω) in enumerate(-nBose:nBose)
         freqSegment = (ωn-1)*(2*nFermi)*(2*nFermi)+1:(ωn+0)*(2*nFermi)*(2*nFermi)
-        res[ωn,:,:] = inv(reshape(χ[freqSegment],2*nFermi,2*nFermi))
+        res[ωn,:,:] = inv(transpose(reshape(χ[freqSegment],2*nFermi,2*nFermi)))
         fermi_grid = freqList[freqSegment]
         for (νn,fg) in enumerate(fermi_grid[1:2*nFermi])
             res[ωn,νn,νn] -= 1.0/χ0[(ω,fg[3])]
