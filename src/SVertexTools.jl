@@ -48,7 +48,7 @@ function expand(TwoPartGF_upup, TwoPartGF_updo, transform!, freqList_map, freqLi
     off(f) = f[1]+nBose+1,f[2]+nFermi+1,f[3]+nFermi+1
     Fup_full = Array{eltype(TwoPartGF_upup)}(undef, length(freqList))
     Fdo_full = Array{eltype(TwoPartGF_updo)}(undef, length(freqList))
-    done = falses(2*nBose,length(freqList))
+    done = falses(length(freqList))
     for (k,v) in freqList_map
         #println("--- setting $k in full, $v in red")
         Fup_full[k] = TwoPartGF_upup[v]
