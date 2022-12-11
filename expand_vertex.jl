@@ -74,20 +74,13 @@ flush(stdout)
 #lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
 # TODO: find a way to keep memory consumption low
 
-println("tmp: after permute")
-flush(stderr)
-flush(stdout)
-ϵₖ, Vₖ, μ    = read_anderson_parameters(dataPath * "/hubb.andpar");
-U, β, nden   = read_hubb_dat(dataPath * "/hubb.dat");
+ϵₖ, Vₖ, μ    = read_anderson_parameters(joinpath(dataPath, "hubb.andpar"))
+U, β, _   = read_hubb_dat(joinpath(dataPath, "hubb.dat"))
+nden         = read_densimp(joinpath(dataPath, "densimp.dat"))
 iνₙ, GImp_ED = readGImp(dataPath*"/gm_wim", only_positive=true)
 E_kin_DMFT, E_pot_DMFT  = calc_E_ED(iνₙ[1:length(GImp_ED)], ϵₖ, Vₖ, GImp_ED, nden, U, β, μ)
 res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : ([], [], [])
 χ_ch_asympt, χ_sp_asympt, χ_pp_asympt = res
-
-
-println("tmp: before write")
-flush(stderr)
-flush(stdout)
 
 jldopen(dataPath*"/ED_out.jld2", "w") do f
     f["Γch"] = Γch

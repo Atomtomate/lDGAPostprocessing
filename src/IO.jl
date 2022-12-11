@@ -85,6 +85,13 @@ function read_gm_wim(nFreq, filename; storedInverse, storeFull=false)
     return GF
 end
 
+function read_densimp(file)
+    content = open(file) do f
+        readlines(f)
+    end
+    return parse(Float64,content[1])
+end
+
 function read_hubb_dat(file)
     content = open(file) do f
         readlines(f)
