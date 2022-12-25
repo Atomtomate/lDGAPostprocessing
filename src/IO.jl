@@ -37,17 +37,17 @@ function readGImp(filename; only_positive=false)
 
 
     tmp = GFs[:,2] .+ GFs[:,3].*1im
-    tmpiνₙ = GFs[1,:] .* 1im
+    tmpiνₙ = GFs[:,1] .* 1im
     if only_positive
-        GImp = tmpG
+        GImp = tmp
         iνₙ  = tmpiνₙ
     else
-        N = 2*size(tmpG,1)
-        NH = size(tmpG,1)
+        NH = size(tmp,1)
+        N  = 2*NH
         GImp = zeros(Complex{Float64}, N)
         iνₙ  = zeros(Complex{Float64}, N)
-        GImp[1:(NH)] = reverse(conj.(tmpG[1:NH]))
-        GImp[(NH+1):N] = tmpG[1:NH]
+        GImp[1:(NH)] = reverse(conj.(tmp[1:NH]))
+        GImp[(NH+1):N] = tmp[1:NH]
         iνₙ[1:(NH)] = conj.(reverse(tmpiνₙ[1:(NH)]))
         iνₙ[(NH+1):N] = tmpiνₙ[1:NH]
     end
