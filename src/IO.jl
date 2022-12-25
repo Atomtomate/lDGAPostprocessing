@@ -33,14 +33,11 @@ function read_chi_asympt(fname::String)
 end
 
 function readGImp(filename; only_positive=false)
-    GFString = open(filename, "r") do f
-        readlines(f)
-    end
+    GFs = readdlm(filename)[:,1:end]
 
 
-    tmp = parse.(Float64,hcat(split.(GFString)...)) # Construct a 2xN array of floats (re,im as 1st index)
-    tmpG = tmp[2,:] .+ tmp[3,:].*1im
-    tmpiνₙ = tmp[1,:] .* 1im
+    tmp = GFs[:,2] .+ GFs[:,3].*1im
+    tmpiνₙ = GFs[1,:] .* 1im
     if only_positive
         GImp = tmpG
         iνₙ  = tmpiνₙ
@@ -59,16 +56,12 @@ end
 
 
 function read_gm_wim(nFreq, filename; storedInverse, storeFull=false)
-    GFString = open(filename, "r") do f
-        readlines(f)
-    end
+    GFs = readdlm(filename)[:,2:end]
 
-    if size(GFString, 1)*(1 + 1*storeFull) < nFreq
+    if size(GFs, 1)*(1 + 1*storeFull) < nFreq
         throw(ArgumentError("nFermFreq in simulation parameters too large! Got $(size(GFString, 1)) lines but need data for $(nFreq) frequencies."))
     end
-    
-    tmp = parse.(Float64,hcat(split.(GFString)...)[2:end,:]) # Construct a 2xN array of floats (re,im as 1st index)
-    tmp = tmp[1,:] .+ tmp[2,:].*1im
+    tmp = GFs[:,1] .+ GFs[:,2].*1im
 
     if storedInverse
         tmp = 1 ./ tmp
