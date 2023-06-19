@@ -1,32 +1,15 @@
 using Pkg
 Pkg.activate(@__DIR__)
-using lDGAPostprocessing
+using lDGAPostprocessing, jED
 
 using EquivalenceClassesConstructor
 using Test
 using DataStructures
 using DelimitedFiles, JLD2
+using TOML
 include("./vertexIntTriple.jl")
 
-gridPath = ARGS[1]  # "/scratch/usr/hhpstobb/grids/b10_f20_s1"
-dataPath = ARGS[2] # "/scratch/usr/hhpstobb/lDGA/tests/non_qubic/ed_vertex"
-β = parse(Float64, ARGS[3])
-
-println("opening: ", gridPath*"/freqList.jld2")
-jldopen(gridPath*"/freqList.jld2", "r") do f
-    for k in ["freqList", "nFermi", "nBose", "shift"] #keys(f)
-        s=Symbol(k)
-        @eval (($s) = ($(f[k])))
-    end
-end
-
-#@load gridPath*"/freqList.jld2" freqRed_map freqList freqList_min parents ops nFermi nBose shift base offset
-println("Expanding Vertex for nFermi=",nFermi,", nBose=",nBose,", shift=",shift)
-flush(stderr)
-flush(stdout)
-
 function expand_TwoPartGF(freqFile, dataPath)
-
     jldopen(gridPath*"/freqList.jld2", "r") do f
         for k in ["freqRed_map", "parents", "ops"]
             s=Symbol(k)
@@ -50,35 +33,45 @@ function expand_TwoPartGF(freqFile, dataPath)
     return TwoPartGF_upup, TwoPartGF_updo
 end
 
+gridPath = ARGS[1]  # "/scratch/usr/hhpstobb/grids/b10_f20_s1"
+dataPath = ARGS[2] # "/scratch/usr/hhpstobb/lDGA/tests/non_qubic/ed_vertex"
+
+println("opening: ", gridPath*"/freqList.jld2")
+jldopen(gridPath*"/freqList.jld2", "r") do f
+    for k in ["freqList", "nFermi", "nBose", "shift"] #keys(f)
+        s=Symbol(k)
+        @eval (($s) = ($(f[k])))
+    end
+end
+cfg         = TOML.parsefile(joinpath(dataPath, "config.toml"))
+U           = cfg["parameters"]["U"]
+β           = cfg["parameters"]["beta"]
+ϵₖ, Vₖ, μ   = read_anderson_parameters(joinpath(dataPath, "hubb.andpar"))
+include("gen_GF.jl")
+
+# ======================================== Unpack 2-Part-GF ========================================
+
+println("Expanding Vertex for nFermi=",nFermi,", nBose=",nBose,", shift=",shift)
+flush(stderr)
+flush(stdout)
+
+
 TwoPartGF_upup, TwoPartGF_updo = expand_TwoPartGF(gridPath*"/freqList.jld2", dataPath)
 println("Done expanding!")
 flush(stderr)
 flush(stdout)
 
-gImp    = read_gm_wim(4*(nBose+nFermi+1), dataPath*"/gm_wim", storedInverse=false)
-g0      = 1.0 ./ read_gm_wim(4*(nBose+nFermi+1), dataPath*"/g0mand", storedInverse=false)
-χ0_full = lDGAPostprocessing.computeχ0(-nBose:nBose, -(nFermi+2*nBose):(nFermi+2*nBose)-1, gImp, β)
-#F_den, F_mag = lDGAPostprocessing.computeF(freq_full, sv_up_test_full, sv_do_test_full, χ0_full)
-#ind = indices(sv_up_test_full) 
+χ0_full = lDGAPostprocessing.computeχ0(-nBose:nBose, -(nFermi+2*nBose):(nFermi+2*nBose)-1, GImp.parent, β)
 
-lDGAPostprocessing.add_χ₀_ω₀!(freqList, TwoPartGF_upup, gImp, β)
-lDGAPostprocessing.add_χ₀_ω₀!(freqList, TwoPartGF_updo, gImp, β)
+lDGAPostprocessing.add_χ₀_ω₀!(freqList, TwoPartGF_upup, GImp.parent, β)
+lDGAPostprocessing.add_χ₀_ω₀!(freqList, TwoPartGF_updo, GImp.parent, β)
 Γch = -1.0 .* lDGAPostprocessing.computeΓ(freqList, TwoPartGF_upup .+ TwoPartGF_updo, χ0_full,nBose,nFermi)
 Γsp = -1.0 .* lDGAPostprocessing.computeΓ(freqList, TwoPartGF_upup .- TwoPartGF_updo, χ0_full,nBose,nFermi)
 println("Done calculating vertex!")
 flush(stderr)
 flush(stdout)
-# TODO: activate this via write_fortran flag
-#lDGAPostprocessing.write_vert_chi(freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath, 2*nBose+1, 2*nFermi)
-#lDGAPostprocessing.write_fort_dir("gamma", freqList, -Γch, -Γsp, dataPath*"/gamma_dir", 2*nBose+1, 2*nFermi)
-#lDGAPostprocessing.write_fort_dir("chi", freqList, TwoPartGF_upup, TwoPartGF_updo, dataPath*"/chi_dir", 2*nBose+1, 2*nFermi)
-# TODO: find a way to keep memory consumption low
 
-ϵₖ, Vₖ, μ    = read_anderson_parameters(joinpath(dataPath, "hubb.andpar"))
-U, β, _   = read_hubb_dat(joinpath(dataPath, "hubb.dat"))
-nden         = read_densimp(joinpath(dataPath, "densimp.dat"))
-iνₙ, GImp_ED = readGImp(dataPath*"/gm_wim", only_positive=true)
-E_kin_DMFT, E_pot_DMFT  = calc_E_ED(iνₙ[1:length(GImp_ED)], ϵₖ, Vₖ, GImp_ED, nden, U, β, μ)
+E_kin_DMFT, E_pot_DMFT  = calc_E_ED(νnGrid[0:last(axes(GImp,1))], ϵₖ, Vₖ, GImp.parent, nden, U, β, μ)
 res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : ([], [], [])
 χ_ch_asympt, χ_sp_asympt, χ_pp_asympt = res
 
@@ -90,8 +83,8 @@ jldopen(dataPath*"/ED_out.jld2", "w") do f
     f["χ_ch_asympt"] = χ_ch_asympt
     f["χ_sp_asympt"] = χ_sp_asympt
     f["χ_pp_asympt"] = χ_pp_asympt
-    f["gImp"] = gImp
-    f["g0"] = g0
+    f["gImp"] = GImp.parent
+    f["g0"] = gLoc
     f["ϵₖ"] = ϵₖ
     f["Vₖ"] = Vₖ
     f["μ"] = μ
