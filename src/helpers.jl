@@ -7,6 +7,20 @@ function identityMap(nB_min, nB_max, nF_min, nF_max, shift, offset, base)
     return fullMap
 end
 
+function cut_margin(freqList, arr, Ncut_ω::Int, Ncut_ν::Int, Nν_max::Int, Nω_max::Int, shift::Int)
+    freqList_cut = similar(freqList, 0)
+    arr_cut      = similar(arr, 0)
+    for i in 1:size(freqList,1)
+        ω, ν, νp = freqList[i]
+        # i < 10 && println(abs(ω), " ?>? ", Nω_max-Ncut_ω,", ", abs(ν+shift*ω/2), " ?>? ", Nν_max-Ncut_ν, ", ", abs(νp+shift*ω/2), " ?>? ", Nν_max-Ncut_ν)
+        if abs(ω) <= Nω_max-Ncut_ω && ν+shift*ω/2 >=  -(Nν_max-Ncut_ν) && ν+shift*ω/2 < (Nν_max-Ncut_ν) &&  νp+shift*ω/2 >=  -(Nν_max-Ncut_ν) && νp+shift*ω/2 < (Nν_max-Ncut_ν) 
+            push!(freqList_cut, freqList[i])
+            push!(arr_cut, arr[i])
+            # i < 100 && print("pushing: ",freqList[i])
+        end
+    end
+    return freqList_cut, arr_cut
+end
 
 # ==================== GF Stuff ====================
 function FUpDo_from_χDMFT(χupdo, GImp, freqFile, β)
@@ -60,7 +74,7 @@ end
 function computeΓ(freqList::Array, χ::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
     res = Array{T}(undef,2*nBose+1, 2*nFermi, 2*nFermi)
     for (ωn,ω) in enumerate(-nBose:nBose)
-        freqSegment = (ωn-1)*(2*nFermi)*(2*nFermi)+1:(ωn+0)*(2*nFermi)*(2*nFermi)
+        freqSegment = findall(fl -> fl[1] == ω, freqList)
         res[ωn,:,:] = inv(transpose(reshape(χ[freqSegment],2*nFermi,2*nFermi)))
         fermi_grid = freqList[freqSegment]
         for (νn,fg) in enumerate(fermi_grid[1:2*nFermi])

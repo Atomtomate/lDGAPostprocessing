@@ -72,7 +72,7 @@ flush(stderr)
 flush(stdout)
 
 E_kin_DMFT, E_pot_DMFT  = calc_E_ED(νnGrid[0:last(axes(GImp,1))], ϵₖ, Vₖ, GImp.parent, nden, U, β, μ)
-res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : ([], [], [])
+res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : error("chi_asympt not found!")
 χ_ch_asympt, χ_sp_asympt, χ_pp_asympt = res
 
 jldopen(dataPath*"/ED_out.jld2", "w") do f
@@ -84,7 +84,7 @@ jldopen(dataPath*"/ED_out.jld2", "w") do f
     f["χ_sp_asympt"] = χ_sp_asympt
     f["χ_pp_asympt"] = χ_pp_asympt
     f["gImp"] = GImp.parent
-    f["g0"] = gLoc
+    f["g0"] = G0W.parent
     f["ϵₖ"] = ϵₖ
     f["Vₖ"] = Vₖ
     f["μ"] = μ

@@ -10,5 +10,5 @@ G0W    = GWeiss(νnGrid, μ, p)
 model  = AIM(ϵₖ, Vₖ, μ, U)
 es     = Eigenspace(model, basis);
 GImp, nden = calc_GF_1(basis, es, νnGrid, β, with_density=true)
-ΣImp   = Σ_from_GImp(G0W, GImp)
-gLoc   = GLoc(ΣImp, μ, νnGrid, kG)
+#ΣImp   = Σ_from_GImp(G0W, GImp)
+#gLoc   = GLoc(ΣImp, μ, νnGrid, kG)
