@@ -58,7 +58,6 @@ function expand(TwoPartGF_upup, TwoPartGF_updo, transform!, freqList_map, freqLi
     open = Stack{eltype(parents)}()
     for i in 1:length(freqList)
         next = i
-        ωn,νn,νpn  = off(freqList[next])
         while !done[next]
             push!(open, next)
             next = parents[next]

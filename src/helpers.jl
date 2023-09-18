@@ -22,7 +22,56 @@ function cut_margin(freqList, arr, Ncut_ω::Int, Ncut_ν::Int, Nν_max::Int, Nω
     return freqList_cut, arr_cut
 end
 
+function Freq_to_OneToIndex(ωn::Int, νn::Int, νpn::Int, shift::Union{Bool,Int}, nBose::Int, nFermi::Int)
+    (ωn+nBose+1,νn+nFermi+1+trunc(Int, shift*ωn/2), νpn+nFermi+1+trunc(Int, shift*ωn/2))
+end
+
+
+"""
+    find_non_nan_matrix(data::Matrix, nFermi::Int)
+
+Indices for slice of matrix not containing any NaNs.
+"""
+function find_non_nan_matrix(data::Matrix, nFermi::Int)
+    nan_list       = sort(map(x->x[1],filter(x->x[1] == x[2], findall(x-> !isnan(x), data))))
+    nh = searchsorted(nan_list, nFermi)
+    res = if length(nh) == 1
+        t1 = diff(nan_list[nh[1]:end])
+        t2 = -1 * diff(nan_list[nh[1]:-1:1])
+        lim_up = findfirst(x->x != 1, t1)
+        lim_lo = findfirst(x->x != 1, t2)
+        lim_up = isnothing(lim_up) ? length(t1) : lim_up
+        lim_lo = isnothing(lim_lo) ? length(t2) : lim_lo
+        lim_non_nan = min(lim_up, lim_lo)
+        (nFermi-lim_non_nan):(nFermi+lim_non_nan)
+    else
+        []
+    end
+    return res
+end
+
 # ==================== GF Stuff ====================
+# ------------------ Bare Bubble -------------------
+function add_χ₀_ω₀!(freqList::Array, arr::Array{T}, gImp::Array{Complex{Float64}, 1}, β::Float64) where T <: Number
+    for i in 1:size(freqList,1)
+        ω, ν, νp = freqList[i]
+        if ω == 0
+            arr[i] -= β*get_symm_f(gImp, ν)*get_symm_f(gImp, νp)
+        end
+    end
+end
+
+
+function computeχ0(ω_range::AbstractArray{Int,1}, ν_range::AbstractArray{Int,1}, gImp::Array{Complex{Float64}, 1}, β::Float64; mode=:ph)
+    !(mode in [:ph, :pp]) && error("unkown mode")
+    χ0 = Dict{Tuple{Int,Int},Complex{Float64}}()
+    for ω in ω_range, ν in ν_range
+        χ0[(ω,ν)] = (mode == :ph) ? -β*get_symm_f(gImp, ν)*get_symm_f(gImp, ν+ω) : -β*get_symm_f(gImp, ν)*get_symm_f(gImp, ω-ν-1)
+    end
+    return χ0
+end
+
+# ------------------ Full Vertex -------------------
 function FUpDo_from_χDMFT(χupdo, GImp, freqFile, β)
     FUpDo = similar(χupdo)
     jldopen(freqFile, "r") do freqFile
@@ -41,98 +90,106 @@ function FUpDo_from_χDMFT(χupdo, GImp, freqFile, β)
     return FUpDo
 end
 
-function add_χ₀_ω₀!(freqList::Array, arr::Array{T}, gImp::Array{Complex{Float64}, 1}, β::Float64) where T <: Number
-    for i in 1:size(freqList,1)
-        ω, ν, νp = freqList[i]
-        if ω == 0
-            arr[i] -= β*get_symm_f(gImp, ν)*get_symm_f(gImp, νp)
-        end
-    end
-end
-
-
-function computeχ0(ω_range::AbstractArray{Int,1}, ν_range::AbstractArray{Int,1}, gImp::Array{Complex{Float64}, 1}, β::Float64; mode=:ph)
-    !(mode in [:ph, :pp]) && error("unkown mode")
-    χ0 = Dict{Tuple{Int,Int},Complex{Float64}}()
-    for ω in ω_range, ν in ν_range
-        χ0[(ω,ν)] = (mode == :ph) ? -β*get_symm_f(gImp, ν)*get_symm_f(gImp, ν+ω) : -β*get_symm_f(gImp, ν)*get_symm_f(gImp, ν-ω)
-    end
-    return χ0
-end
-
-function computeF_ph(freqList::AbstractArray{Int,2}, χ_upup::SVertex{T}, χ_updo::SVertex{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}) where T
+function computeF_ph(freqList::Vector, χ_upup::Vector{T}, χ_updo::Vector{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}) where T
     F_den = similar(χ_upup)
     F_mag = similar(χ_upup)
     for i in 1:size(freqList,1)
-        ω, ν, νp = freqList[i,:]
+        ω, ν, νp = freqList[i]
         sub = ν == νp ? χ0[(ω,ν)] : 0.0
-        F_den[ω,ν,νp] = (-1.0/χ0[(ω,ν)])*(χ_upup[ω,ν,νp]+χ_updo[ω,ν,νp]-sub)*(1.0/χ0[(ω,νp)])
-        F_mag[ω,ν,νp] = (-1.0/χ0[(ω,ν)])*(χ_upup[ω,ν,νp]-χ_updo[ω,ν,νp]-sub)*(1.0/χ0[(ω,νp)])
+        F_den[i] = (-1.0/χ0[(ω,ν)])*(χ_upup[i]+χ_updo[i]-sub)*(1.0/χ0[(ω,νp)])
+        F_mag[i] = (-1.0/χ0[(ω,ν)])*(χ_upup[i]-χ_updo[i]-sub)*(1.0/χ0[(ω,νp)])
     end
     return F_den, F_mag
 end
 
-function computeF_pp(freqList::AbstractArray{Int,2}, χ_s::SVertex{T}, χ_t::SVertex{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}) where T
+function computeF_pp(freqList::Vector, χ_s::Vector{T}, χ_t::Vector{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}) where T
     F_s = similar(χ_s)
     F_t = similar(χ_t)
     for i in 1:size(freqList,1)
-        ω, ν, νp = freqList[i,:]
+        ω, ν, νp = freqList[i]
         sub = ν == νp ? χ0[(ω,ν)] : 0.0
-        F_s[ω,ν,νp] = (-1.0/χ0[(ω,ν)])*(χ_s[ω,ν,νp]-sub)*(1.0/χ0[(ω,νp)])
-        F_t[ω,ν,νp] = (-1.0/χ0[(ω,ν)])*(χ_t[ω,ν,νp]-sub)*(1.0/χ0[(ω,νp)])
+        F_s[i] = (-2.0/χ0[(ω,ν)])*(χ_s[i]+2*sub)*(2.0/χ0[(ω,νp)])
+        F_t[i] = (-1.0/χ0[(ω,ν)])*(χ_t[i]-2*sub)*(1.0/χ0[(ω,νp)])
     end
     return F_s, F_t
 end
 
-function computeΓ_ph(freqList::Array, χm::Array{T,1}, χd::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
-    Γm = Array{T}(undef,2*nBose+1, 2*nFermi, 2*nFermi)
-    Γd = Array{T}(undef,2*nBose+1, 2*nFermi, 2*nFermi)
+# -------------- Irreducible Vertex ----------------
+function computeΓ_ph2(freqList::Array, χm::Array{T,1}, χd::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
+    Γm = Array{T}(undef, 2*nFermi, 2*nFermi,2*nBose+1)
+    Γd = Array{T}(undef, 2*nFermi, 2*nFermi,2*nBose+1)
     for (ωn,ω) in enumerate(-nBose:nBose)
         freqSegment = findall(fl -> fl[1] == ω, freqList)
-        Γm[ωn,:,:] = inv(transpose(reshape(χm[freqSegment],2*nFermi,2*nFermi)))
-        Γd[ωn,:,:] = inv(transpose(reshape(χd[freqSegment],2*nFermi,2*nFermi)))
+        Γm[:,:,ωn] = inv(transpose(reshape(-1 .* χm[freqSegment],2*nFermi,2*nFermi)))
+        Γd[:,:,ωn] = inv(transpose(reshape(-1 .* χd[freqSegment],2*nFermi,2*nFermi)))
         fermi_grid = freqList[freqSegment]
         for (νn,fg) in enumerate(fermi_grid[1:2*nFermi])
-            Γm[ωn,νn,νn] -= 1.0/χ0[(ω,fg[3])]
-            Γd[ωn,νn,νn] -= 1.0/χ0[(ω,fg[3])]
+            Γm[νn,νn,ωn] -= 1.0/χ0[(ω,fg[3])]
+            Γd[νn,νn,ωn] -= 1.0/χ0[(ω,fg[3])]
         end
     end
     return Γm, Γd
 end
 
-function computeΓ_pp(freqList::Array, χs::Array{T,1}, χt::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
-    Γs = Array{T}(undef,2*nBose+1, 2*nFermi, 2*nFermi)
-    Γt = Array{T}(undef,2*nBose+1, 2*nFermi, 2*nFermi)
+function computeΓ_ph(freqList::Array, χm::Array{T,1}, χd::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
+    Γm = Array{T}(undef, 2*nFermi, 2*nFermi,2*nBose+1)
+    Γd = Array{T}(undef, 2*nFermi, 2*nFermi,2*nBose+1)
     for (ωn,ω) in enumerate(-nBose:nBose)
         freqSegment = findall(fl -> fl[1] == ω, freqList)
+        Γm[:,:,ωn] = inv(transpose(reshape(χm[freqSegment],2*nFermi,2*nFermi)))
+        Γd[:,:,ωn] = inv(transpose(reshape(χd[freqSegment],2*nFermi,2*nFermi)))
         fermi_grid = freqList[freqSegment]
-        Γs[ωn,:,:] = transpose(reshape(χs[freqSegment],2*nFermi,2*nFermi))#
-        Γt[ωn,:,:] = transpose(reshape(χt[freqSegment],2*nFermi,2*nFermi))#
         for (νn,fg) in enumerate(fermi_grid[1:2*nFermi])
-            Γs[ωn,νn,νn] -= χ0[(ω,fg[3])]
-            Γt[ωn,νn,νn] += χ0[(ω,fg[3])]
+            Γm[νn,νn,ωn] -= 1.0/χ0[(ω,fg[3])]
+            Γd[νn,νn,ωn] -= 1.0/χ0[(ω,fg[3])]
         end
-        Γs[ωn,:,:] = 4 .* inv(Γs[ωn,:,:])
-        Γt[ωn,:,:] = 4 .* inv(Γt[ωn,:,:])
-        for (νn,fg) in enumerate(fermi_grid[1:2*nFermi])
-            Γs[ωn,νn,νn] += 2.0/χ0[(ω,fg[3])]
-            Γt[ωn,νn,νn] -= 2.0/χ0[(ω,fg[3])]
+    end
+    return Γm, Γd
+end
+
+function computeΓ_pp(freqList::Array, χs::Array{T,3}, χt::Array{T,3}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, shift, nBose::Int64, nFermi::Int64) where T
+    Γs = fill!(Array{ComplexF64,3}(undef, 2*nFermi, 2*nFermi, 2*nBose+1), NaN)
+    Γt = fill!(Array{ComplexF64,3}(undef, 2*nFermi, 2*nFermi, 2*nBose+1), NaN)
+    # for (ωn,ω) in enumerate([0])
+    
+    for (ωi, ωn) in enumerate(-nBose:nBose)
+        non_nan_slice = find_non_nan_matrix(χs[:,:,ωi], nFermi)
+        if !isempty(non_nan_slice)
+            # if any(isnan.(χs[non_nan_slice,non_nan_slice,ωi]))
+            #     println("ERROR at $ωi/$ωn, NaN cut did not work. slice: $non_nan_slice")
+            # end
+            Γs[non_nan_slice,non_nan_slice,ωi] = 4 .* inv(χs[non_nan_slice,non_nan_slice,ωi])
+            Γt[non_nan_slice,non_nan_slice,ωi] = 4 .* inv(χt[non_nan_slice,non_nan_slice,ωi])
+            for (νi,νn) in enumerate((-nFermi:nFermi-1) .- shift*trunc(Int,ωn/2))
+                Γs[νi,νi,ωi] += 2/χ0[(ωn,νn)]
+                Γt[νi,νi,ωi] -= 2/χ0[(ωn,νn)]
+            end
         end
     end
     return Γs, Γt
 end
 
-function χph_to_χpp(freqList::AbstractArray{Int,2}, χph_upup::SVertex{T}, χph_updo::SVertex{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}) where T
-    χpp_s = deepcopy(χph_upup) 
-    χpp_t = deepcopy(χph_upup) 
+
+
+
+function χph_to_χpp(freqList::Array, χph_upup::Array, χph_updo::Array, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, shift, nBose::Int, nFermi::Int)
+    χpp_s = fill!(Array{eltype(χph_upup),3}(undef, 2*nFermi, 2*nFermi, 2*nBose+1), NaN)
+    χpp_t = fill!(Array{eltype(χph_upup),3}(undef, 2*nFermi, 2*nFermi, 2*nBose+1), NaN)
+    old_shape = size(χph_upup)
+    χph_upup = reshape(χph_upup, 2*nFermi, 2*nFermi, 2*nBose+1)
+    χph_updo = reshape(χph_updo, 2*nFermi, 2*nFermi, 2*nBose+1)
+
     for i in 1:size(freqList,1)
-        ω, ν, νp = freqList[i,:]
-        χpp_s = - χ0[(ω,ν)] - χph_upup[ω-ν-νp,ν,νp] + 2*χph_updo[ω-ν-νp,ν,νp]
-        χpp_t = + χ0[(ω,ν)] + χph_upup[ω-ν-νp,ν,νp]
+        ωn, νn, νpn = freqList[i]
+        ωi,νi,νpi = Freq_to_OneToIndex(ωn, νn, νpn, shift, nBose, nFermi)
+        ωi_ph,νi_ph,νpi_ph = Freq_to_OneToIndex(ωn - νn - νpn - 1, νn, νpn, shift, nBose, nFermi)
+        if !(any((ωi,νi,νpi) .< 1) || any((ωi_ph,νi_ph,νpi_ph) .< 1) || any((ωi,νi,νpi) .> (2*nBose,2*nFermi-1,2*nFermi-1)) || any((ωi_ph,νi_ph,νpi_ph) .> (2*nBose,2*nFermi-1,2*nFermi-1)))
+            χpp_s[νi,νpi,ωi] = - χ0[(ωn,νn)]*(νn==νpn) - χph_upup[νi_ph,νpi_ph,ωi_ph] + 2*χph_updo[νi_ph,νpi_ph,ωi_ph]
+            χpp_t[νi,νpi,ωi] = + χ0[(ωn,νn)]*(νn==νpn) + χph_upup[νi_ph,νpi_ph,ωi_ph]
+        end
     end
-    # χpp = similar(χph)
-    # chi_inv_singlet(l,s)=-chi_0(i,j,k)-chi_up_up(i-j-k-1,j,k)+2.0d0*chi_up_down(i-j-k-1,j,k)          !if we have chi_ph, i.e. we have to make the frequency shift
-    # chi_inv_triplet(l,s)= chi_0(i,j,k)+chi_up_up(i-j-k-1,j,k)                                                            ! to get chi in the pp-notation
+    χph_upup = reshape(χph_upup, old_shape)
+    χph_updo = reshape(χph_updo, old_shape)
     χpp_s, χpp_t
 end
 

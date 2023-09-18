@@ -61,7 +61,7 @@ flush(stdout)
 lDGAPostprocessing.add_χ₀_ω₀!(freqList, χph_upup, GImp.parent, β)
 lDGAPostprocessing.add_χ₀_ω₀!(freqList, χph_updo, GImp.parent, β)
 
-lDGAPostprocessing.write_vert_chi(freqList, χph_upup, χph_updo, ".", nBose, nFermi)
+# lDGAPostprocessing.write_vert_chi(freqList, χph_upup, χph_updo, ".", nBose, nFermi)
 println("Done expanding!")
 flush(stderr)
 flush(stdout)
@@ -75,10 +75,10 @@ flush(stdout)
 χ0_pp_full   = computeχ0(-nBose:nBose, -(nFermi+2*nBose):(nFermi+2*nBose)-1, GImp.parent, β; mode=:pp)
 
 χpp_s, χpp_t = χph_to_χpp(freqList, χph_upup, χph_updo, χ0_pp_full, shift, nBose, nFermi)
-#Fs, Ft       = computeF_pp(freqList, χpp_s, χpp_s, χ0_pp_full)
+Fs, Ft       = computeF_pp(freqList, χpp_s[:], χpp_t[:], χ0_pp_full)
 Γs, Γt       = computeΓ_pp(freqList, χpp_s, χpp_t, χ0_pp_full, shift, nBose, nFermi)
-# Φs = reshape(Fs,2*nFermi,2*nFermi,2*nBose+1)[26:75,26:75,51] .- Γs
-# Φt = reshape(Ft,2*nFermi,2*nFermi,2*nBose+1)[26:75,26:75,51] .- Γt
+Φs = reshape(Fs,2*nFermi,2*nFermi,2*nBose+1) .- Γs
+Φt = reshape(Ft,2*nFermi,2*nFermi,2*nBose+1) .- Γt
 
 
 # This segment computes quntities in the ph channel
@@ -92,8 +92,8 @@ flush(stdout)
 Γm, Γd = -1.0 .* computeΓ_ph(freqList, χm_gen, χd_gen, χ0_full,nBose,nFermi)
 #Γm2, Γd2 = -1.0 .* lDGAPostprocessing.computeΓ_ph2(freqList, χph_upup .+ χph_updo, χph_upup .- χph_updo, χ0_full,nBose,nFermi)
 Fm, Fd = computeF_ph(freqList, χph_upup, χph_updo, χ0_full)
-Φm = reshape(Fm,2*nFermi,2*nFermi,2*nBose+1)[26:75,26:75,51] .- Γm[26:75,26:75,51]
-Φd = reshape(Fd,2*nFermi,2*nFermi,2*nBose+1)[26:75,26:75,51] .- Γd[26:75,26:75,51]
+# Φm = reshape(Fm,2*nFermi,2*nFermi,2*nBose+1)[26:75,26:75,51] .- Γm[26:75,26:75,51]
+# Φd = reshape(Fd,2*nFermi,2*nFermi,2*nBose+1)[26:75,26:75,51] .- Γd[26:75,26:75,51]
 
 res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : error("chi_asympt not found!")
 χ_d_asympt, χ_m_asympt, χ_pp_asympt = res
