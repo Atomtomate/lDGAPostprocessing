@@ -108,7 +108,7 @@ function computeF_pp(freqList::Vector, χ_s::Vector{T}, χ_t::Vector{T}, χ0::Di
     for i in 1:size(freqList,1)
         ω, ν, νp = freqList[i]
         sub = ν == νp ? χ0[(ω,ν)] : 0.0
-        F_s[i] = (-2.0/χ0[(ω,ν)])*(χ_s[i]+2*sub)*(2.0/χ0[(ω,νp)])
+        F_s[i] = (-1.0/χ0[(ω,ν)])*(χ_s[i]+2*sub)*(1.0/χ0[(ω,νp)])
         F_t[i] = (-1.0/χ0[(ω,ν)])*(χ_t[i]-2*sub)*(1.0/χ0[(ω,νp)])
     end
     return reshape(F_s, 2*nFermi, 2*nFermi, 2*nBose+1), reshape(F_t, 2*nFermi, 2*nFermi, 2*nBose+1)

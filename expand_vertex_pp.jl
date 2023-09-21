@@ -85,7 +85,7 @@ println("Done with pp channel!")
 # This segment computes quntities in the ph channel
 # We first subtract the unconnected part of the susceptibility
 χ0_full = lDGAPostprocessing.computeχ0(-nBose:nBose, -(nFermi+2*nBose):(nFermi+2*nBose)-1, GImp.parent, β)
-Γsp, Γch = -1.0 .* computeΓ_ph(freqList, χph_upup .- χph_updo,  χph_upup .+ χph_updo, χ0_full, nBose, nFermi)
+Γm, Γd = -1.0 .* computeΓ_ph(freqList, χph_upup .- χph_updo,  χph_upup .+ χph_updo, χ0_full, nBose, nFermi)
 Fm, Fd = computeF_ph(freqList, χph_upup, χph_updo, χ0_full, nBose, nFermi)
 println("Done with ph channel!")
 
@@ -95,8 +95,8 @@ res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt
 E_kin_DMFT, E_pot_DMFT  = calc_E_ED(νnGrid[0:last(axes(GImp,1))], ϵₖ, Vₖ, GImp.parent, nden, U, β, μ)
 
 jldopen(dataPath*"/DMFT_out.jld2", "w") do f
-    f["Γch"] = permutedims(Γch, [3,1,2])
-    f["Γsp"] = permutedims(Γsp, [3,1,2])
+    f["Γch"] = permutedims(Γd, [3,1,2])
+    f["Γsp"] = permutedims(Γm, [3,1,2])
     f["Φpp_s"] = permutedims(Φs, [3,1,2])
     f["Φpp_t"] = permutedims(Φt, [3,1,2])
     f["χDMFTch"] = permutedims(reshape(χph_upup .+ χph_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
