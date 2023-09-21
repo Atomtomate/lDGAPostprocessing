@@ -90,19 +90,19 @@ function FUpDo_from_χDMFT(χupdo, GImp, freqFile, β)
     return FUpDo
 end
 
-function computeF_ph(freqList::Vector, χ_upup::Vector{T}, χ_updo::Vector{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}) where T
-    F_den = similar(χ_upup)
-    F_mag = similar(χ_upup)
+function computeF_ph(freqList::Vector, χ_upup::Vector{T}, χ_updo::Vector{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int, nFermi::Int) where T
+    Fd = similar(χ_upup)
+    Fm = similar(χ_upup)
     for i in 1:size(freqList,1)
         ω, ν, νp = freqList[i]
         sub = ν == νp ? χ0[(ω,ν)] : 0.0
-        F_den[i] = (-1.0/χ0[(ω,ν)])*(χ_upup[i]+χ_updo[i]-sub)*(1.0/χ0[(ω,νp)])
-        F_mag[i] = (-1.0/χ0[(ω,ν)])*(χ_upup[i]-χ_updo[i]-sub)*(1.0/χ0[(ω,νp)])
+        Fd[i] = (-1.0/χ0[(ω,ν)])*(χ_upup[i]+χ_updo[i]-sub)*(1.0/χ0[(ω,νp)])
+        Fm[i] = (-1.0/χ0[(ω,ν)])*(χ_upup[i]-χ_updo[i]-sub)*(1.0/χ0[(ω,νp)])
     end
-    return F_den, F_mag
+    return reshape(Fm, 2*nFermi, 2*nFermi, 2*nBose+1), reshape(Fd, 2*nFermi, 2*nFermi, 2*nBose+1)
 end
 
-function computeF_pp(freqList::Vector, χ_s::Vector{T}, χ_t::Vector{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}) where T
+function computeF_pp(freqList::Vector, χ_s::Vector{T}, χ_t::Vector{T}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int, nFermi::Int) where T
     F_s = similar(χ_s)
     F_t = similar(χ_t)
     for i in 1:size(freqList,1)
@@ -111,7 +111,7 @@ function computeF_pp(freqList::Vector, χ_s::Vector{T}, χ_t::Vector{T}, χ0::Di
         F_s[i] = (-2.0/χ0[(ω,ν)])*(χ_s[i]+2*sub)*(2.0/χ0[(ω,νp)])
         F_t[i] = (-1.0/χ0[(ω,ν)])*(χ_t[i]-2*sub)*(1.0/χ0[(ω,νp)])
     end
-    return F_s, F_t
+    return reshape(F_s, 2*nFermi, 2*nFermi, 2*nBose+1), reshape(F_t, 2*nFermi, 2*nFermi, 2*nBose+1)
 end
 
 # -------------- Irreducible Vertex ----------------

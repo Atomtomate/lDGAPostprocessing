@@ -62,26 +62,12 @@ flush(stderr)
 flush(stdout)
 
 
-
-# This segment computes the reducible vertex in the pp channel
-# - Compute χ_s
-# - Compute F_s
-# - Compute Γ_s
-# - Compute ϕ_s
-χ0_pp_full   = computeχ0(-nBose:nBose, -(nFermi+2*nBose):(nFermi+2*nBose)-1, GImp.parent, β; mode=:pp)
-χpp_s, χpp_t = χph_to_χpp(freqList, χph_upup, χph_updo, χ0)
-Fs, Ft       = computeF_pp(freqList, χpp_s, χpp_s, χ0_pp_full)
-Γs, Γt       = computeΓ_pp(freqList, χpp_s, χpp_t, χ0_full, nBose, nFermi)
-
-Φupdo = Fs .- Γs
-Φupup = Ft .- Γt
-
 # This segment computes quntities in the ph channel
 # We first subtract the unconnected part of the susceptibility
 χ0_full = lDGAPostprocessing.computeχ0(-nBose:nBose, -(nFermi+2*nBose):(nFermi+2*nBose)-1, GImp.parent, β)
 lDGAPostprocessing.add_χ₀_ω₀!(freqList, χ_upup, GImp.parent, β)
 lDGAPostprocessing.add_χ₀_ω₀!(freqList, χ_updo, GImp.parent, β)
-Γsp, Γch = -1.0 .* computeΓ_ph(freqList, χ_upup .+ χ_updo, χ_upup .- χ_updo, χ0_full,nBose,nFermi)
+Γsp, Γch = -1.0 .* computeΓ_ph(freqList, χ_upup .- χ_updo,  χ_upup .+ χ_updo, χ0_full,nBose,nFermi)
 
 
 
@@ -94,10 +80,10 @@ res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt
 χ_ch_asympt, χ_sp_asympt, χ_pp_asympt = res
 
 jldopen(dataPath*"/ED_out.jld2", "w") do f
-    f["Γch"] = Γch
-    f["Γsp"] = Γsp
-    f["χDMFTch"] = permutedims(reshape(χ_upup .+ χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
-    f["χDMFTsp"] = permutedims(reshape(χ_upup .- χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
+    f["Γch"] = permutedims(Γch, [3,1,2])
+    f["Γsp"] = permutedums(Γsp, [3,1,2])
+    f["χDMFTch"] = permutedims(reshape(χ_upup .+ χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[2,3,1])
+    f["χDMFTsp"] = permutedims(reshape(χ_upup .- χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[2,3,1])
     f["χ_ch_asympt"] = χ_ch_asympt
     f["χ_sp_asympt"] = χ_sp_asympt
     f["χ_pp_asympt"] = χ_pp_asympt

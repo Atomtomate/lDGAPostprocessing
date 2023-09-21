@@ -43,7 +43,7 @@ jldopen(gridPath*"/freqList.jld2", "r") do f
         @eval (($s) = ($(f[k])))
     end
 end
-cfg         = TOML.parsefile(joinpath(dataPath, "config.toml"))
+cfg         = TOML.parsefile(joinpath(dataPath, "DMFT_config.toml"))
 U           = cfg["parameters"]["U"]
 β           = cfg["parameters"]["beta"]
 ϵₖ, Vₖ, μ   = read_anderson_parameters(joinpath(dataPath, "hubb.andpar"))
@@ -75,25 +75,46 @@ flush(stdout)
 χ0_pp_full   = computeχ0(-nBose:nBose, -(nFermi+2*nBose):(nFermi+2*nBose)-1, GImp.parent, β; mode=:pp)
 
 χpp_s, χpp_t = χph_to_χpp(freqList, χph_upup, χph_updo, χ0_pp_full, shift, nBose, nFermi)
-Fs, Ft       = computeF_pp(freqList, χpp_s[:], χpp_t[:], χ0_pp_full)
+Fs, Ft       = computeF_pp(freqList, χpp_s[:], χpp_t[:], χ0_pp_full, nBose, nFermi)
 Γs, Γt       = computeΓ_pp(freqList, χpp_s, χpp_t, χ0_pp_full, shift, nBose, nFermi)
 Φs = reshape(Fs,2*nFermi,2*nFermi,2*nBose+1) .- Γs
 Φt = reshape(Ft,2*nFermi,2*nFermi,2*nBose+1) .- Γt
+println("Done with pp channel!")
 
 
 # This segment computes quntities in the ph channel
 # We first subtract the unconnected part of the susceptibility
-#
 χ0_full = lDGAPostprocessing.computeχ0(-nBose:nBose, -(nFermi+2*nBose):(nFermi+2*nBose)-1, GImp.parent, β)
-
-
-χm_gen = χph_upup .- χph_updo
-χd_gen = χph_upup .+ χph_updo
-Γm, Γd = -1.0 .* computeΓ_ph(freqList, χm_gen, χd_gen, χ0_full,nBose,nFermi)
-#Γm2, Γd2 = -1.0 .* lDGAPostprocessing.computeΓ_ph2(freqList, χph_upup .+ χph_updo, χph_upup .- χph_updo, χ0_full,nBose,nFermi)
-Fm, Fd = computeF_ph(freqList, χph_upup, χph_updo, χ0_full)
-# Φm = reshape(Fm,2*nFermi,2*nFermi,2*nBose+1)[26:75,26:75,51] .- Γm[26:75,26:75,51]
-# Φd = reshape(Fd,2*nFermi,2*nFermi,2*nBose+1)[26:75,26:75,51] .- Γd[26:75,26:75,51]
+Γsp, Γch = -1.0 .* computeΓ_ph(freqList, χph_upup .- χph_updo,  χph_upup .+ χph_updo, χ0_full, nBose, nFermi)
+Fm, Fd = computeF_ph(freqList, χph_upup, χph_updo, χ0_full, nBose, nFermi)
+println("Done with ph channel!")
 
 res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : error("chi_asympt not found!")
 χ_d_asympt, χ_m_asympt, χ_pp_asympt = res
+
+E_kin_DMFT, E_pot_DMFT  = calc_E_ED(νnGrid[0:last(axes(GImp,1))], ϵₖ, Vₖ, GImp.parent, nden, U, β, μ)
+
+jldopen(dataPath*"/DMFT_out.jld2", "w") do f
+    f["Γch"] = permutedims(Γch, [3,1,2])
+    f["Γsp"] = permutedims(Γsp, [3,1,2])
+    f["Φpp_s"] = permutedims(Φs, [3,1,2])
+    f["Φpp_t"] = permutedims(Φt, [3,1,2])
+    f["χDMFTch"] = permutedims(reshape(χph_upup .+ χph_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
+    f["χDMFTsp"] = permutedims(reshape(χph_upup .- χph_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
+    f["χ_ch_asympt"] = χ_d_asympt
+    f["χ_sp_asympt"] = χ_m_asympt
+    f["χ_pp_asympt"] = χ_pp_asympt
+    f["gImp"] = GImp.parent
+    f["g0"] = G0W.parent
+    f["ϵₖ"] = ϵₖ
+    f["Vₖ"] = Vₖ
+    f["μ"] = μ
+    f["U"] = U
+    f["β"] = β
+    f["nden"] = nden
+    f["E_kin_DMFT"] = E_kin_DMFT
+    f["E_pot_DMFT"] = E_pot_DMFT
+    f["grid_shift"] = shift
+    f["grid_nBose"] = nBose
+    f["grid_nFermi"] = nFermi
+end
