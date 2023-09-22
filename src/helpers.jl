@@ -115,22 +115,6 @@ function computeF_pp(freqList::Vector, χ_s::Vector{T}, χ_t::Vector{T}, χ0::Di
 end
 
 # -------------- Irreducible Vertex ----------------
-function computeΓ_ph2(freqList::Array, χm::Array{T,1}, χd::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
-    Γm = Array{T}(undef, 2*nFermi, 2*nFermi,2*nBose+1)
-    Γd = Array{T}(undef, 2*nFermi, 2*nFermi,2*nBose+1)
-    for (ωn,ω) in enumerate(-nBose:nBose)
-        freqSegment = findall(fl -> fl[1] == ω, freqList)
-        Γm[:,:,ωn] = inv(transpose(reshape(-1 .* χm[freqSegment],2*nFermi,2*nFermi)))
-        Γd[:,:,ωn] = inv(transpose(reshape(-1 .* χd[freqSegment],2*nFermi,2*nFermi)))
-        fermi_grid = freqList[freqSegment]
-        for (νn,fg) in enumerate(fermi_grid[1:2*nFermi])
-            Γm[νn,νn,ωn] -= 1.0/χ0[(ω,fg[3])]
-            Γd[νn,νn,ωn] -= 1.0/χ0[(ω,fg[3])]
-        end
-    end
-    return Γm, Γd
-end
-
 function computeΓ_ph(freqList::Array, χm::Array{T,1}, χd::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
     Γm = Array{T}(undef, 2*nFermi, 2*nFermi,2*nBose+1)
     Γd = Array{T}(undef, 2*nFermi, 2*nFermi,2*nBose+1)
