@@ -82,8 +82,8 @@ res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt
 jldopen(dataPath*"/ED_out.jld2", "w") do f
     f["Γch"] = permutedims(Γch, [3,1,2])
     f["Γsp"] = permutedims(Γsp, [3,1,2])
-    f["χDMFTch"] = permutedims(reshape(χ_upup .+ χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[2,3,1])
-    f["χDMFTsp"] = permutedims(reshape(χ_upup .- χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[2,3,1])
+    f["χDMFTch"] = permutedims(reshape(χ_upup .+ χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
+    f["χDMFTsp"] = permutedims(reshape(χ_upup .- χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
     f["χ_ch_asympt"] = χ_ch_asympt
     f["χ_sp_asympt"] = χ_sp_asympt
     f["χ_pp_asympt"] = χ_pp_asympt
