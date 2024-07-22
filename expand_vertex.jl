@@ -45,7 +45,7 @@ jldopen(gridPath*"/freqList.jld2", "r") do f
         @eval (($s) = ($(f[k])))
     end
 end
-cfg         = TOML.parsefile(joinpath(dataPath, "config.toml"))
+cfg         = TOML.parsefile(joinpath(dataPath, "DMFT_config.toml"))
 U           = cfg["parameters"]["U"]
 β           = cfg["parameters"]["beta"]
 ϵₖ, Vₖ, μ   = read_anderson_parameters(joinpath(dataPath, "hubb.andpar"))
