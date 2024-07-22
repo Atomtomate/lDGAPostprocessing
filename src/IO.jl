@@ -134,6 +134,7 @@ function read_anderson_parameters(file)
     return convert(Array{Float64,1}, ϵₖ), convert(Array{Float64,1}, Vₖ), μ
 end
 
+
 function write_vert_chi(freqList::Array, ver::Array{Complex{Float64},1}, verdo::Array{Complex{Float64},1}, dirname::String, nBose::Int, nFermi::Int)
     open(dirname * "/vert_chi", "w") do f
         for (i,freq) in enumerate(freqList)

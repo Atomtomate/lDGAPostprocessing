@@ -35,6 +35,39 @@ function expand_TwoPartGF(freqFile, dataPath)
     return χ_upup, χ_updo
 end
 
+function write_GAMMA_DM_FULLRANGE_dbg(Γm::Array{ComplexF64,3}, Γd::Array{ComplexF64,3}, fname::String, β::Float64, nBose::Int, nFermi::Int, shift::Union{Int,Bool})
+    open(fname, "w") do f
+        for (ωi,ωn) in enumerate(-nBose:nBose)
+            νgrid =  [i - trunc(Int64,shift*ωn/2) for i in (-nFermi:nFermi-1)]
+            for (νi,νn) in enumerate(νgrid)
+                for (νpi, νpn) in enumerate(νgrid)
+                    lDGAPostprocessing.@printf(f, "%17.10f%17.10f%17.10f%17.10f%17.10f%17.10f%17.10f\n", 
+                                               ωn,  νn,  νpn,  
+                        real(Γd[ωi,νi,νpi]), imag(Γd[ωi,νi,νpi]),
+                        real(Γm[ωi,νi,νpi]), imag(Γm[ωi,νi,νpi]))
+                end
+            end
+        end
+    end
+end
+
+function write_vert_chi_dbg(ver::Array{ComplexF64,3}, verdo::Array{ComplexF64,3}, fname::String, β::Float64, nBose::Int, nFermi::Int, shift::Union{Int,Bool})
+    open(fname, "w") do f
+        for (ωi,ωn) in enumerate(-nBose:nBose)
+            νgrid =  [i - trunc(Int64,shift*ωn/2) for i in (-nFermi:nFermi-1)]
+            for (νi,νn) in enumerate(νgrid)
+                for (νpi, νpn) in enumerate(νgrid)
+                    lDGAPostprocessing.@printf(f, "  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f  %18.10f\n", 
+                                               2*ωn*π/β,  (2*νn+1)*π/β,  (2*νpn+1)*π/β,  
+                        real(ver[ωi,νi,νpi]), imag(ver[ωi,νi,νpi]),
+                        real(verdo[ωi,νi,νpi]), imag(verdo[ωi,νi,νpi]))
+                end
+            end
+        end
+    end
+end
+
+
 gridPath = ARGS[1]  # "/scratch/usr/hhpstobb/grids/b10_f20_s1"
 dataPath = ARGS[2] # "/scratch/usr/hhpstobb/lDGA/tests/non_qubic/ed_vertex"
 
@@ -69,37 +102,14 @@ flush(stdout)
 χ0_full = lDGAPostprocessing.computeχ0(-nBose:nBose, -(nFermi+2*nBose):(nFermi+2*nBose)-1, GImp.parent, β)
 lDGAPostprocessing.add_χ₀_ω₀!(freqList, χ_upup, GImp.parent, β)
 lDGAPostprocessing.add_χ₀_ω₀!(freqList, χ_updo, GImp.parent, β)
+
+χDMFTch = permutedims(reshape((χ_upup .+ χ_updo), 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
+χDMFTsp = permutedims(reshape((χ_upup .- χ_updo), 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
+χDMFTuu = permutedims(reshape(χ_upup, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
+χDMFTud = permutedims(reshape(χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
 Γsp, Γch = computeΓ_ph(χDMFTsp,  χDMFTch, GImp, β,nBose,nFermi,shift)
 
-
-
-println("Done calculating vertex!")
-flush(stderr)
-flush(stdout)
-
-E_kin_DMFT, E_pot_DMFT  = calc_E_ED(νnGrid[0:last(axes(GImp,1))], ϵₖ, Vₖ, GImp.parent, nden, U, β, μ)
-res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : error("chi_asympt not found!")
-χ_ch_asympt, χ_sp_asympt, χ_pp_asympt = res
-
-jldopen(dataPath*"/ED_out.jld2", "w") do f
-    f["Γch"] = -1.0 .* Γd
-    f["Γsp"] = -1.0 .* Γm
-    f["χDMFTch"] = permutedims(reshape(χ_upup .+ χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
-    f["χDMFTsp"] = permutedims(reshape(χ_upup .- χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
-    f["χ_ch_asympt"] = χ_ch_asympt
-    f["χ_sp_asympt"] = χ_sp_asympt
-    f["χ_pp_asympt"] = χ_pp_asympt
-    f["gImp"] = GImp.parent
-    f["g0"] = G0W.parent
-    f["ϵₖ"] = ϵₖ
-    f["Vₖ"] = Vₖ
-    f["μ"] = μ
-    f["U"] = U
-    f["β"] = β
-    f["nden"] = nden
-    f["E_kin_DMFT"] = E_kin_DMFT
-    f["E_pot_DMFT"] = E_pot_DMFT
-    f["grid_shift"] = shift
-    f["grid_nBose"] = nBose
-    f["grid_nFermi"] = nFermi
-end
+println("Writing vert_chi!")
+write_vert_chi_dbg(χDMFTuu, χDMFTud, joinpath(dataPath,"vert_chi"), β, nBose, nFermi, shift)
+println("Writing GAMMA_DM_FULLRANGE")
+write_GAMMA_DM_FULLRANGE_dbg(Γsp, Γch, joinpath(dataPath,"GAMMA_DM_FULLRANGE"), β, nBose, nFermi, shift)

@@ -1,7 +1,7 @@
 name = "lDGAPostprocessing"
 uuid = "90e5b0d8-73d4-48d2-a116-5fd8650b07f2"
 authors = ["Julian Stobbe <Atomtomate@gmx.de>"]
-version = "0.8.0"
+version = "0.8.1"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"

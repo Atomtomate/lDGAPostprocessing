@@ -1,4 +1,4 @@
-kG = jED.gen_kGrid(cfg["parameters"]["lattice"], 100)
+#kG = jED.gen_kGrid(cfg["parameters"]["lattice"], 100)
  
 p  = AIMParams(ϵₖ, Vₖ)
 Nν = 4*(nBose+nFermi+1)

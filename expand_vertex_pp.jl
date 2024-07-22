@@ -58,7 +58,7 @@ flush(stdout)
 
 
 χph_upup, χph_updo = expand_TwoPartGF(gridPath*"/freqList.jld2", dataPath)
-lDGAPostprocessing.add_χ₀_ω₀!(freqList, χph_upup, GImp.parent, β)
+lDGAPostprocessing.add_χ₀_ω₀!(freqList, , GImp.parent, β)
 lDGAPostprocessing.add_χ₀_ω₀!(freqList, χph_updo, GImp.parent, β)
 
 # lDGAPostprocessing.write_vert_chi(freqList, χph_upup, χph_updo, ".", nBose, nFermi)
@@ -84,23 +84,26 @@ println("Done with pp channel!")
 
 # This segment computes quntities in the ph channel
 # We first subtract the unconnected part of the susceptibility
+#
+χDMFTch = permutedims(reshape(χph_upup .+ χph_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,1,2])
+χDMFTsp = permutedims(reshape(χph_upup .- χph_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,1,2])
 χ0_full = lDGAPostprocessing.computeχ0(-nBose:nBose, -(nFermi+2*nBose):(nFermi+2*nBose)-1, GImp.parent, β)
-Γm, Γd = -1.0 .* computeΓ_ph(freqList, χph_upup .- χph_updo,  χph_upup .+ χph_updo, χ0_full, nBose, nFermi)
+Γsp, Γch = computeΓ_ph(χDMFTsp,  χDMFTch, GImp, β,nBose,nFermi,shift)
 Fm, Fd = computeF_ph(freqList, χph_upup, χph_updo, χ0_full, nBose, nFermi)
 println("Done with ph channel!")
 
-res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : error("chi_asympt not found!")
+res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt") : (println("WARNING! chi_asympt not found!"); [nothing, nothing, nothing])
 χ_d_asympt, χ_m_asympt, χ_pp_asympt = res
 
 E_kin_DMFT, E_pot_DMFT  = calc_E_ED(νnGrid[0:last(axes(GImp,1))], ϵₖ, Vₖ, GImp.parent, nden, U, β, μ)
 
 jldopen(dataPath*"/DMFT_out.jld2", "w") do f
-    f["Γch"] = permutedims(Γd, [3,1,2])
-    f["Γsp"] = permutedims(Γm, [3,1,2])
+    f["Γch"] = -1.0 .* Γd
+    f["Γsp"] = -1.0 .* Γm
     f["Φpp_s"] = permutedims(Φs, [3,1,2])
     f["Φpp_t"] = permutedims(Φt, [3,1,2])
-    f["χDMFTch"] = permutedims(reshape(χph_upup .+ χph_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
-    f["χDMFTsp"] = permutedims(reshape(χph_upup .- χph_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
+    f["χDMFTch"] = χDMFTch
+    f["χDMFTsp"] = χDMFTsp
     f["χ_ch_asympt"] = χ_d_asympt
     f["χ_sp_asympt"] = χ_m_asympt
     f["χ_pp_asympt"] = χ_pp_asympt

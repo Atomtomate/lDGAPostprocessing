@@ -47,7 +47,7 @@ function cut_margin(freqList, arr, Ncut_ω::Int, Ncut_ν::Int, Nν_max::Int, Nω
     return freqList_cut, arr_cut
 end
 
-gridPath = ARGS[1]  # "/scratch/usr/hhpstobb/grids/b10_f20_s1"
+gridPath = ARGS[1] # "/scratch/usr/hhpstobb/grids/b10_f20_s1"
 dataPath = ARGS[2] # "/scratch/usr/hhpstobb/lDGA/tests/non_qubic/ed_vertex"
 
 println("opening: ", gridPath*"/freqList.jld2")

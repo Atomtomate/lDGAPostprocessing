@@ -45,10 +45,11 @@ function expand_test(TwoPartGF_upup, TwoPartGF_updo, freqList_map, freqList, par
 end
 
 function expand(TwoPartGF_upup, TwoPartGF_updo, transform!, freqList_map, freqList, parents, ops, nBose, nFermi)
-    off(f) = f[1]+nBose+1,f[2]+nFermi+1,f[3]+nFermi+1
+    #off(f) = f[1]+nBose+1,f[2]+nFermi+1,f[3]+nFermi+1
     Fup_full = Array{eltype(TwoPartGF_upup)}(undef, length(freqList))
     Fdo_full = Array{eltype(TwoPartGF_updo)}(undef, length(freqList))
     done = falses(length(freqList))
+    #There are a few frequency tuples in the full grid which directly map to the reduced grid. Here we expand these first.
     for (k,v) in freqList_map
         #println("--- setting $k in full, $v in red")
         Fup_full[k] = TwoPartGF_upup[v]
@@ -56,6 +57,7 @@ function expand(TwoPartGF_upup, TwoPartGF_updo, transform!, freqList_map, freqLi
         done[k] = true
     end
     open = Stack{eltype(parents)}()
+    #Now we expand the frequencies which map onto frequencies which are not directly on the reduced grid. We follow a chain of mappings on the full grid recursevly until we find a frequency tuple on the reduced grid: i.e: freq1_full -> freq2_full -> freq3_full -> freq1_reduced.
     for i in 1:length(freqList)
         next = i
         while !done[next]
@@ -66,6 +68,7 @@ function expand(TwoPartGF_upup, TwoPartGF_updo, transform!, freqList_map, freqLi
             prev = next
             next = pop!(open)
             done[next] = true
+            #Which symmetry is considered (complex conjugate, *(-1), ...) is given by the transform function, with "ops" indicating which symmetry is used if multiple are applicable.
             transform!(Fup_full, Fdo_full, prev, next, ops)
         end
     end

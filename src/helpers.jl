@@ -115,17 +115,17 @@ function computeF_pp(freqList::Vector, χ_s::Vector{T}, χ_t::Vector{T}, χ0::Di
 end
 
 # -------------- Irreducible Vertex ----------------
-function computeΓ_ph(freqList::Array, χm::Array{T,1}, χd::Array{T,1}, χ0::Dict{Tuple{Int,Int},Complex{Float64}}, nBose::Int64, nFermi::Int64) where T
-    Γm = Array{T}(undef, 2*nFermi, 2*nFermi,2*nBose+1)
-    Γd = Array{T}(undef, 2*nFermi, 2*nFermi,2*nBose+1)
-    for (ωn,ω) in enumerate(-nBose:nBose)
-        freqSegment = findall(fl -> fl[1] == ω, freqList)
-        Γm[:,:,ωn] = inv(transpose(reshape(χm[freqSegment],2*nFermi,2*nFermi)))
-        Γd[:,:,ωn] = inv(transpose(reshape(χd[freqSegment],2*nFermi,2*nFermi)))
-        fermi_grid = freqList[freqSegment]
-        for (νn,fg) in enumerate(fermi_grid[1:2*nFermi])
-            Γm[νn,νn,ωn] -= 1.0/χ0[(ω,fg[3])]
-            Γd[νn,νn,ωn] -= 1.0/χ0[(ω,fg[3])]
+function computeΓ_ph(χm, χd, gImp, β::Float64, nBose::Int64, nFermi::Int64, shift)
+    Γm = similar(χm)
+    Γd = similar(χd)
+    for (ωi,ωn) in enumerate(-nBose:nBose)
+        νgrid =  [i - trunc(Int64,shift*ωn/2) for i in (-nFermi:nFermi-1)]
+        Γm[ωi,:,:] = inv(χm[ωi,:,:])
+        Γd[ωi,:,:] = inv(χd[ωi,:,:])
+        for (νi,νn) in enumerate(νgrid)
+            sub = 1.0 / ( - β * lDGAPostprocessing.get_symm_f(gImp.parent, νn) * lDGAPostprocessing.get_symm_f(gImp.parent, ωn+νn))
+            Γm[ωi,νi,νi] -= sub
+            Γd[ωi,νi,νi] -= sub
         end
     end
     return Γm, Γd
