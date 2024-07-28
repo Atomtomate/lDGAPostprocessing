@@ -98,4 +98,5 @@ jldopen(dataPath*"/ED_out_dbg.jld2", "w") do f
     f["grid_shift"] = shift
     f["grid_nBose"] = nBose
     f["grid_nFermi"] = nFermi
+    f["kGrid"] = cfg["parameters"]["lattice"]
 end

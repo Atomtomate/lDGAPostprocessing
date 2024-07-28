@@ -131,5 +131,6 @@ for Ncut in 0:10:130
         f["grid_shift"] = shift
         f["grid_nBose"] = nBose_N
         f["grid_nFermi"] = nFermi_N
+        f["kGrid"] = cfg["parameters"]["lattice"]
     end
 end
