@@ -1,6 +1,8 @@
 using Pkg
 Pkg.activate(@__DIR__)
-using lDGAPostprocessing, jED
+using lDGAPostprocessing
+Pkg.activate("/scratch/projects/hhp00048/codes/jED.jl")
+using jED
 
 using EquivalenceClassesConstructor
 using Test

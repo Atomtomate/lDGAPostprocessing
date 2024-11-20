@@ -54,6 +54,7 @@ U           = cfg["parameters"]["U"]
 β           = cfg["parameters"]["beta"]
 ϵₖ, Vₖ, μ   = read_anderson_parameters(joinpath(dataPath, "hubb.andpar"))
 include("gen_GF.jl")
+                #push!(fits, (p, νnGrid, GImp_i, ΣImp_i, μ, dens, fit_quality, fit_res))
 
 # ======================================== Unpack 2-Part-GF ========================================
 
@@ -104,6 +105,26 @@ res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt
 χ_d_asympt, χ_m_asympt, χ_pp_asympt = res
 
 E_kin_DMFT, E_pot_DMFT  = calc_E_ED(νnGrid[0:last(axes(GImp,1))], ϵₖ, Vₖ, GImp.parent, nden, U, β, μ)
+
+ΣLoc_m, ΣLoc_d = calc_local_EoM(Fm, Fd, GImp, U, β, nden, nBose, nFermi, shift)
+local_EoM_check = abs.(0.5 .* (ΣLoc_m .+ ΣLoc_d) .- ΣImp[axes(ΣLoc_m,1)])
+fitCheck = if !isnothing(gLoc)
+    abs.(gLoc .- G0W)
+else
+    lDGAPostprocessing.OffsetVector(repeat([NaN], 6), 0:5)
+end
+sum_vk, min_eps_diff, min_vk, min_eps = andpar_check_values(ϵₖ, Vₖ)
+println(repeat("=",80))
+println(" ϵₖ = $(lpad.(round.(ϵₖ, digits=4),9)...)")
+println(" Vₖ = $(lpad.(round.(Vₖ, digits=4),9)...)")
+println("   1. min(|Vₖ|)           = ", min_vk)
+println("   2. ∑Vₗ^2               = ", sum_vk)
+println("   3. min(|ϵₖ|)           = ", min_eps)
+println("   4. min(|ϵₖ - ϵₗ|)      = ", min_eps_diff)
+println("   5. |GLoc - G0W|[ν]     = ", fitCheck[0:5])
+println("   6. |ΣImp - Σ_2part|[ν] = ", local_EoM_check[0:5])
+println(repeat("=",80))
+
 
 jldopen(dataPath*"/DMFT_out.jld2", "w") do f
     f["Γch"] = -1.0 .* Γch

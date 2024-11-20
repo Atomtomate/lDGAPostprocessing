@@ -195,3 +195,41 @@ function calc_E_ED(iνₙ, ϵₖ, Vₖ, GImp, n, U, β, μ; full=false)
     E_pot = E_pot .* (1/β) .+ 0.5*Σ_hartree .- (β/4) .* E_pot_tail
     return E_kin, E_pot
 end
+
+function calc_local_EoM(Fm, Fd, gImp_in::OffsetVector, U::Float64, β::Float64, n::Float64, n_iω::Int, n_iν::Int, shift)
+    νmax = floor(Int, size(Fm,1)/2)
+    ωGrid = -n_iω:n_iω
+    ΣLoc_m = OffsetVector(zeros(ComplexF64, νmax), 0:νmax-1) 
+    ΣLoc_d = OffsetVector(zeros(ComplexF64, νmax), 0:νmax-1)
+    sl = 0:2*n_iν
+    t = cat(conj(reverse(gImp_in[sl])), gImp_in[sl], dims = 1)
+    gImp = OffsetArray(t, -length(sl):(length(sl)-1))
+    for (ωi,ωm) in enumerate(ωGrid)
+        νnGrid = ((-n_iν):(n_iν-1)) .- shift * trunc(Int, ωm / 2)
+        for (νi,νn) in enumerate(νnGrid)
+            for (νpi,νpn) in enumerate(νnGrid)
+                if νn >= 0 && νn < νmax   
+                    ΣLoc_m[νn] += gImp[νpn] * gImp[νpn + ωm] * gImp[νn + ωm] * Fm[νi,νpi,ωi]
+                    ΣLoc_d[νn] -= gImp[νpn] * gImp[νpn + ωm] * gImp[νn + ωm] * Fd[νi,νpi,ωi]
+                end
+            end
+        end
+    end
+    return U .* ΣLoc_m/β^2 .+ U*n/2, U .* ΣLoc_d/β^2 .+ U*n/2
+end
+
+function andpar_check_values(ϵₖ, Vₖ)
+    NSites = length(ϵₖ)
+    min_epsk_diff = Inf
+    min_Vₖ = minimum(abs.(Vₖ))
+    min_eps = minimum(abs.(ϵₖ))
+    sum_vk = sum(Vₖ .^ 2)
+    for i in 1:NSites
+        for j in i+1:NSites
+            if abs(ϵₖ[i] - ϵₖ[j]) < min_epsk_diff
+                min_epsk_diff = abs(ϵₖ[i] - ϵₖ[j])
+            end
+        end
+    end
+    return sum_vk, min_epsk_diff, min_Vₖ, min_eps
+end

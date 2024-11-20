@@ -30,7 +30,9 @@
 # ================================================================================ #
 using Pkg
 Pkg.activate(@__DIR__)
-using lDGAPostprocessing, jED
+using lDGAPostprocessing
+Pkg.activate("/scratch/projects/hhp00048/codes/jED.jl")
+using jED
 
 using EquivalenceClassesConstructor
 using Test
@@ -81,12 +83,14 @@ jldopen(gridPath*"/freqList.jld2", "r") do f
         @eval (($s) = ($(f[k])))
     end
 end
-cfg         = TOML.parsefile(joinpath(dataPath, "DMFT_config.toml"))
+cfg         = TOML.parsefile(joinpath(dataPath, "config.toml"))
 U           = cfg["parameters"]["U"]
 β           = cfg["parameters"]["beta"]
 ϵₖ, Vₖ, μ   = read_anderson_parameters(joinpath(dataPath, "hubb.andpar"))
 include("gen_GF.jl")
 
+println("mu = $μ, U= $U, beta = $β, nden = $nden")
+println("andpar: \n $p")
 # ======================================== Unpack 2-Part-GF ========================================
 
 println("Expanding Vertex for nFermi=",nFermi,", nBose=",nBose,", shift=",shift)
@@ -121,7 +125,7 @@ res = isfile(dataPath * "/chi_asympt") ? read_chi_asympt(dataPath * "/chi_asympt
 
 jldopen(dataPath*"/ED_out.jld2", "w") do f
     f["Γch"] = -1.0 .* Γch
-    f["Γsp"] = -1.0 .* Γch
+    f["Γsp"] = -1.0 .* Γsp
     f["χDMFTch"] = permutedims(reshape(χ_upup .+ χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
     f["χDMFTsp"] = permutedims(reshape(χ_upup .- χ_updo, 2*nFermi, 2*nFermi, 2*nBose+1),[3,2,1])
     f["χ_ch_asympt"] = χ_ch_asympt
